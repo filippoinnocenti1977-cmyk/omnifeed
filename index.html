@@ -565,65 +565,49 @@
       loadActiveCategory();
     });
 
-    // --- LOGICA SINCRONIZZAZIONE CLOUD KV ---
-async function syncFeedsFromCloud() {
-  const indicator = document.getElementById('cloudSyncIndicator');
-  try {
-    const resp = await fetch(CLOUDFLARE_SYNC_ENDPOINT);
-    if (resp.ok) {
-      const cloudData = await resp.json();
-      if (Array.isArray(cloudData) && cloudData.length > 0) {
-        state.feeds = cloudData;
-        localStorage.setItem('omni_feeds', JSON.stringify(cloudData));
-        renderSourcesList();
-      } else if (cloudData && typeof cloudData === 'object') {
-        if (Array.isArray(cloudData.feeds) && cloudData.feeds.length > 0) {
-          state.feeds = cloudData.feeds;
-          localStorage.setItem('omni_feeds', JSON.stringify(cloudData.feeds));
-        }
-        if (Array.isArray(cloudData.countries) && cloudData.countries.length > 0) {
-          state.countries = cloudData.countries;
-          localStorage.setItem('omni_countries', JSON.stringify(cloudData.countries));
+  // --- LOGICA SINCRONIZZAZIONE CLOUD KV ---
+    async function syncFeedsFromCloud() {
+      const indicator = document.getElementById('cloudSyncIndicator');
+      try {
+        // Parametro anti-cache (_t) per costringere lo smartphone a leggere i dati freschi
+        const resp = await fetch(`${CLOUDFLARE_SYNC_ENDPOINT}&_t=${Date.now()}`, { cache: 'no-store' });
+        if (resp.ok) {
+          const cloudData = await resp.json();
+          if (cloudData && typeof cloudData === 'object' && !Array.isArray(cloudData)) {
+            if (Array.isArray(cloudData.countries) && cloudData.countries.length > 0) {
+              state.countries = cloudData.countries;
+              localStorage.setItem('omni_countries', JSON.stringify(cloudData.countries));
+            }
+            if (Array.isArray(cloudData.feeds) && cloudData.feeds.length > 0) {
+              state.feeds = cloudData.feeds;
+              localStorage.setItem('omni_feeds', JSON.stringify(cloudData.feeds));
+            }
+          } else if (Array.isArray(cloudData) && cloudData.length > 0) {
+            state.feeds = cloudData;
+            localStorage.setItem('omni_feeds', JSON.stringify(cloudData));
+          }
           renderNavigation();
+          renderSourcesList();
+          if (indicator) indicator.innerHTML = `<span class="w-1.5 h-1.5 rounded-full bg-emerald-400"></span> Connesso`;
         }
-        renderSourcesList();
+      } catch (e) {
+        console.warn("Sincronizzazione cloud non disponibile, uso locale:", e);
+        if (indicator) indicator.innerHTML = `<span class="w-1.5 h-1.5 rounded-full bg-amber-400"></span> Locale`;
       }
-      if (indicator) indicator.innerHTML = `<span class="w-1.5 h-1.5 rounded-full bg-emerald-400"></span> Connesso`;
     }
-  } catch (e) {
-    console.warn("Sincronizzazione cloud non disponibile, uso locale:", e);
-    if (indicator) indicator.innerHTML = `<span class="w-1.5 h-1.5 rounded-full bg-amber-400"></span> Locale`;
-  }
-}
 
-async function pushFeedsToCloud() {
-  const indicator = document.getElementById('cloudSyncIndicator');
-  if (indicator) indicator.innerHTML = `<span class="w-1.5 h-1.5 rounded-full bg-cyan-400 animate-spin"></span> Sync...`;
-  try {
-    const payload = {
-      feeds: state.feeds,
-      countries: state.countries
-    };
-    await fetch(CLOUDFLARE_SYNC_ENDPOINT, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(payload)
-    });
-    if (indicator) indicator.innerHTML = `<span class="w-1.5 h-1.5 rounded-full bg-emerald-400"></span> Connesso`;
-  } catch (e) {
-    console.error("Errore salvataggio su Cloudflare KV:", e);
-    if (indicator) indicator.innerHTML = `<span class="w-1.5 h-1.5 rounded-full bg-rose-400"></span> Errore Sync`;
-  }
-}
-
-    async function pushFeedsToCloud(feedsList) {
+    async function pushFeedsToCloud() {
       const indicator = document.getElementById('cloudSyncIndicator');
       if (indicator) indicator.innerHTML = `<span class="w-1.5 h-1.5 rounded-full bg-cyan-400 animate-spin"></span> Sync...`;
       try {
+        const payload = {
+          countries: state.countries,
+          feeds: state.feeds
+        };
         await fetch(CLOUDFLARE_SYNC_ENDPOINT, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(feedsList)
+          body: JSON.stringify(payload)
         });
         if (indicator) indicator.innerHTML = `<span class="w-1.5 h-1.5 rounded-full bg-emerald-400"></span> Connesso`;
       } catch (e) {
