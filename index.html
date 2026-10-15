@@ -353,7 +353,22 @@
       </div>
     </div>
   </div>
-
+<!-- SEZIONE CREA PAESE PERSONALIZZATO -->
+      <div class="pt-3 border-t border-slate-800">
+        <p class="text-xs font-semibold text-slate-300 mb-2">Oppure crea una nazione su misura:</p>
+        <div class="space-y-2">
+          <div class="grid grid-cols-3 gap-2">
+            <input id="inputCustomCountryFlag" type="text" placeholder="Bandiera (es. 🇯🇵)" class="bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-xs text-white outline-none focus:border-cyan-400">
+            <input id="inputCustomCountryName" type="text" placeholder="Nome Paese (es. Giappone)" class="col-span-2 bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-xs text-white outline-none focus:border-cyan-400">
+          </div>
+          <input id="inputCustomCountryFeedName" type="text" placeholder="Nome testata (es. NHK News)" class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-xs text-white outline-none focus:border-cyan-400">
+          <input id="inputCustomCountryFeedUrl" type="url" placeholder="URL Feed RSS (https://.../feed.xml)" class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-xs text-white outline-none font-mono focus:border-cyan-400">
+          <button onclick="addCustomCountry()" type="button" class="w-full py-2 bg-cyan-600 hover:bg-cyan-500 text-slate-950 font-bold rounded-xl text-xs transition-colors cursor-pointer mt-1">
+            Crea Paese e Sincronizza nel Cloud
+          </button>
+        </div>
+      </div>
+  
   <!-- MODAL: AGGIUNGI FEED -->
   <div id="modalAddFeed" class="fixed inset-0 z-50 bg-black/80 backdrop-blur-md hidden flex items-center justify-center p-4">
     <div class="bg-slate-900 border border-slate-800 w-full max-w-md rounded-2xl p-5 shadow-2xl">
@@ -901,6 +916,48 @@
       renderNavigation();
       renderSourcesList();
       document.getElementById('modalAddCountry').classList.add('hidden');
+      selectCategory(`${id}:Top Stories`);
+    }
+    function addCustomCountry() {
+      const flag = document.getElementById('inputCustomCountryFlag').value.trim() || '🌐';
+      const name = document.getElementById('inputCustomCountryName').value.trim();
+      const feedName = document.getElementById('inputCustomCountryFeedName').value.trim() || 'Feed Principale';
+      const feedUrl = document.getElementById('inputCustomCountryFeedUrl').value.trim();
+
+      if (!name || !feedUrl) {
+        alert('Inserisci almeno il Nome del Paese e l\'URL del Feed RSS.');
+        return;
+      }
+
+      // Crea un identificativo univoco per la nazione
+      const id = 'c_' + Math.random().toString(36).substring(2, 7);
+      
+      state.countries.push({
+        id,
+        name,
+        flag,
+        subcategories: ['Top Stories', 'Politica', 'Società & Cultura']
+      });
+
+      state.feeds.push({
+        id: 'feed_' + id + '_' + Date.now(),
+        name: feedName,
+        url: feedUrl,
+        categoryKey: `${id}:Top Stories`
+      });
+
+      saveState();
+      pushFeedsToCloud();
+      renderNavigation();
+      renderSourcesList();
+
+      // Pulisci i campi e chiudi il modale
+      document.getElementById('inputCustomCountryFlag').value = '';
+      document.getElementById('inputCustomCountryName').value = '';
+      document.getElementById('inputCustomCountryFeedName').value = '';
+      document.getElementById('inputCustomCountryFeedUrl').value = '';
+      document.getElementById('modalAddCountry').classList.add('hidden');
+
       selectCategory(`${id}:Top Stories`);
     }
     function populateDestinationDropdown() {
