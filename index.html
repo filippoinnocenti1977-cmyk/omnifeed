@@ -724,12 +724,12 @@
         if (isChecked) autoTranslateVisibleArticles();
       });
 
-      document.getElementById('btnRefresh').addEventListener('click', () => {
+      document.getElementById('btnRefresh').addEventListener('click', async () => {
         const icon = document.querySelector('#btnRefresh i');
         icon.classList.add('animate-spin');
+        await syncFeedsFromCloud();
         loadActiveCategory(true).finally(() => icon.classList.remove('animate-spin'));
       });
-
       setupModal('btnOpenAddCountry', 'modalAddCountry', 'addCountryClose');
       setupModal('btnOpenAddFeed', 'modalAddFeed', 'addFeedClose');
       setupModal('btnOpenSettings', 'modalSettings', 'settingsClose');
