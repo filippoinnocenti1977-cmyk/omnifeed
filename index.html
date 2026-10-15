@@ -76,7 +76,7 @@
           <i data-lucide="scale" class="w-5 h-5"></i>
         </button>
 
-        <button id="btnRefresh" title="Aggiorna sezione" class="touch-target p-2 rounded-xl bg-slate-900 border border-slate-800 text-slate-300 hover:text-cyan-400 active:scale-95 transition-all cursor-pointer">
+        <button id="btnRefresh" title="Aggiorna sezione e sincronizza cloud" class="touch-target p-2 rounded-xl bg-slate-900 border border-slate-800 text-slate-300 hover:text-cyan-400 active:scale-95 transition-all cursor-pointer">
           <i data-lucide="refresh-cw" class="w-5 h-5"></i>
         </button>
 
@@ -327,7 +327,7 @@
     </div>
   </div>
 
-  <!-- MODAL: AGGIUNGI PAESE -->
+  <!-- MODAL: AGGIUNGI PAESE (CON FORM PERSONALIZZATO INTEGRATO) -->
   <div id="modalAddCountry" class="fixed inset-0 z-50 bg-black/80 backdrop-blur-md hidden flex items-center justify-center p-4">
     <div class="bg-slate-900 border border-slate-800 w-full max-w-md rounded-2xl p-5 shadow-2xl">
       <div class="flex items-center justify-between mb-4">
@@ -336,6 +336,7 @@
         </h3>
         <button id="addCountryClose" class="touch-target p-1 text-slate-400 hover:text-white cursor-pointer"><i data-lucide="x" class="w-5 h-5"></i></button>
       </div>
+      
       <p class="text-xs text-slate-400 mb-3">Seleziona una nazione con feed pronti all'uso:</p>
       <div class="grid grid-cols-2 gap-2 mb-4">
         <button onclick="addPresetCountry('Francia', '🇫🇷', 'https://www.lemonde.fr/rss/une.xml', 'Le Monde')" class="p-2.5 rounded-xl bg-slate-950 border border-slate-800 hover:border-indigo-500 text-left text-xs font-semibold flex items-center gap-2 text-slate-200 cursor-pointer">
@@ -351,24 +352,26 @@
           <span class="text-lg">🇨🇭</span> Svizzera (NZZ)
         </button>
       </div>
-    </div>
-  </div>
-<!-- SEZIONE CREA PAESE PERSONALIZZATO -->
-      <div class="pt-3 border-t border-slate-800">
-        <p class="text-xs font-semibold text-slate-300 mb-2">Oppure crea una nazione su misura:</p>
-        <div class="space-y-2">
+
+      <!-- SEZIONE CREA PAESE PERSONALIZZATO -->
+      <div class="pt-4 border-t border-slate-800">
+        <p class="text-xs font-semibold text-slate-300 mb-2.5">Oppure crea una nazione su misura:</p>
+        <div class="space-y-2.5">
           <div class="grid grid-cols-3 gap-2">
             <input id="inputCustomCountryFlag" type="text" placeholder="Bandiera (es. 🇯🇵)" class="bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-xs text-white outline-none focus:border-cyan-400">
             <input id="inputCustomCountryName" type="text" placeholder="Nome Paese (es. Giappone)" class="col-span-2 bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-xs text-white outline-none focus:border-cyan-400">
           </div>
           <input id="inputCustomCountryFeedName" type="text" placeholder="Nome testata (es. NHK News)" class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-xs text-white outline-none focus:border-cyan-400">
           <input id="inputCustomCountryFeedUrl" type="url" placeholder="URL Feed RSS (https://.../feed.xml)" class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-xs text-white outline-none font-mono focus:border-cyan-400">
-          <button onclick="addCustomCountry()" type="button" class="w-full py-2 bg-cyan-600 hover:bg-cyan-500 text-slate-950 font-bold rounded-xl text-xs transition-colors cursor-pointer mt-1">
+          <button onclick="addCustomCountry()" type="button" class="w-full py-2.5 bg-gradient-to-r from-cyan-600 to-indigo-600 hover:from-cyan-500 hover:to-indigo-500 text-white font-bold rounded-xl text-xs transition-all cursor-pointer mt-1 active:scale-95 shadow-md shadow-cyan-900/30">
             Crea Paese e Sincronizza nel Cloud
           </button>
         </div>
       </div>
-  
+
+    </div>
+  </div>
+
   <!-- MODAL: AGGIUNGI FEED -->
   <div id="modalAddFeed" class="fixed inset-0 z-50 bg-black/80 backdrop-blur-md hidden flex items-center justify-center p-4">
     <div class="bg-slate-900 border border-slate-800 w-full max-w-md rounded-2xl p-5 shadow-2xl">
@@ -580,11 +583,10 @@
       loadActiveCategory();
     });
 
-  // --- LOGICA SINCRONIZZAZIONE CLOUD KV ---
+    // --- LOGICA SINCRONIZZAZIONE CLOUD KV ---
     async function syncFeedsFromCloud() {
       const indicator = document.getElementById('cloudSyncIndicator');
       try {
-        // Parametro anti-cache (_t) per costringere lo smartphone a leggere i dati freschi
         const resp = await fetch(`${CLOUDFLARE_SYNC_ENDPOINT}&_t=${Date.now()}`, { cache: 'no-store' });
         if (resp.ok) {
           const cloudData = await resp.json();
@@ -681,7 +683,7 @@
       state.feeds = INITIAL_FEEDS;
       state.articlesCache = {};
       saveState();
-      pushFeedsToCloud(INITIAL_FEEDS);
+      pushFeedsToCloud();
       renderNavigation();
       renderSourcesList();
       loadActiveCategory(true);
@@ -745,6 +747,7 @@
         await syncFeedsFromCloud();
         loadActiveCategory(true).finally(() => icon.classList.remove('animate-spin'));
       });
+
       setupModal('btnOpenAddCountry', 'modalAddCountry', 'addCountryClose');
       setupModal('btnOpenAddFeed', 'modalAddFeed', 'addFeedClose');
       setupModal('btnOpenSettings', 'modalSettings', 'settingsClose');
@@ -829,7 +832,7 @@
         if (name && url) {
           state.feeds.push({ id: 'custom_' + Date.now(), name, url, categoryKey });
           saveState();
-          pushFeedsToCloud(state.feeds);
+          pushFeedsToCloud();
           renderSourcesList();
           delete state.articlesCache[categoryKey];
           document.getElementById('modalAddFeed').classList.add('hidden');
@@ -895,7 +898,7 @@
       });
     }
 
-  function addPresetCountry(name, flag, feedUrl, feedName) {
+    function addPresetCountry(name, flag, feedUrl, feedName) {
       const id = name.toLowerCase().slice(0, 2);
       if (!state.countries.find(c => c.id === id)) {
         state.countries.push({
@@ -912,12 +915,13 @@
         categoryKey: `${id}:Top Stories`
       });
       saveState();
-      pushFeedsToCloud(); // Invia sia i paesi che i feed al cloud
+      pushFeedsToCloud();
       renderNavigation();
       renderSourcesList();
       document.getElementById('modalAddCountry').classList.add('hidden');
       selectCategory(`${id}:Top Stories`);
     }
+
     function addCustomCountry() {
       const flag = document.getElementById('inputCustomCountryFlag').value.trim() || '🌐';
       const name = document.getElementById('inputCustomCountryName').value.trim();
@@ -925,11 +929,10 @@
       const feedUrl = document.getElementById('inputCustomCountryFeedUrl').value.trim();
 
       if (!name || !feedUrl) {
-        alert('Inserisci almeno il Nome del Paese e l\'URL del Feed RSS.');
+        alert("Inserisci almeno il Nome del Paese e l'URL del Feed RSS.");
         return;
       }
 
-      // Crea un identificativo univoco per la nazione
       const id = 'c_' + Math.random().toString(36).substring(2, 7);
       
       state.countries.push({
@@ -951,7 +954,6 @@
       renderNavigation();
       renderSourcesList();
 
-      // Pulisci i campi e chiudi il modale
       document.getElementById('inputCustomCountryFlag').value = '';
       document.getElementById('inputCustomCountryName').value = '';
       document.getElementById('inputCustomCountryFeedName').value = '';
@@ -960,6 +962,7 @@
 
       selectCategory(`${id}:Top Stories`);
     }
+
     function populateDestinationDropdown() {
       const sel = document.getElementById('selectFeedDestination');
       let opts = [];
@@ -1666,7 +1669,7 @@ Struttura la risposta in 4 brevi sezioni:
     function removeFeed(id) {
       state.feeds = state.feeds.filter(f => f.id !== id);
       saveState();
-      pushFeedsToCloud(state.feeds);
+      pushFeedsToCloud();
       renderSourcesList();
       loadActiveCategory(true);
     }
