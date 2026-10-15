@@ -880,7 +880,7 @@
       });
     }
 
-    function addPresetCountry(name, flag, feedUrl, feedName) {
+  function addPresetCountry(name, flag, feedUrl, feedName) {
       const id = name.toLowerCase().slice(0, 2);
       if (!state.countries.find(c => c.id === id)) {
         state.countries.push({
@@ -897,13 +897,12 @@
         categoryKey: `${id}:Top Stories`
       });
       saveState();
-      pushFeedsToCloud(state.feeds);
+      pushFeedsToCloud(); // Invia sia i paesi che i feed al cloud
       renderNavigation();
       renderSourcesList();
       document.getElementById('modalAddCountry').classList.add('hidden');
       selectCategory(`${id}:Top Stories`);
     }
-
     function populateDestinationDropdown() {
       const sel = document.getElementById('selectFeedDestination');
       let opts = [];
