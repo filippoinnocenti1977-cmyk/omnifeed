@@ -1,69 +1,1620 @@
-export default {
-  async fetch(request, env, ctx) {
-    const corsHeaders = {
-      "Access-Control-Allow-Origin": "*",
-      "Access-Control-Allow-Methods": "GET, POST, OPTIONS",
-      "Access-Control-Allow-Headers": "Content-Type",
+<!DOCTYPE html>
+<html lang="it">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <title>OmniFeed AI - Global Intelligence & Reader</title>
+  <!-- Tailwind CSS CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- Lucide Icons -->
+  <script src="https://unpkg.com/lucide@latest"></script>
+  <style>
+    ::-webkit-scrollbar { width: 5px; height: 5px; }
+    ::-webkit-scrollbar-track { background: #0f172a; }
+    ::-webkit-scrollbar-thumb { background: #334155; border-radius: 9999px; }
+    ::-webkit-scrollbar-thumb:hover { background: #6366f1; }
+    
+    .glass-panel {
+      background: rgba(15, 23, 42, 0.85);
+      backdrop-filter: blur(14px);
+      -webkit-backdrop-filter: blur(14px);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+    }
+
+    .glass-card {
+      background: rgba(30, 41, 59, 0.65);
+      backdrop-filter: blur(10px);
+      -webkit-backdrop-filter: blur(10px);
+      border: 1px solid rgba(255, 255, 255, 0.06);
+    }
+    
+    .touch-target { min-height: 44px; min-width: 44px; }
+    .prose-reader p { margin-bottom: 1.25rem; line-height: 1.85; }
+  </style>
+</head>
+<body class="bg-slate-950 text-slate-100 font-sans antialiased min-h-screen flex flex-col pb-20 md:pb-6 selection:bg-indigo-500 selection:text-white">
+
+  <!-- TOP HEADER -->
+  <header class="sticky top-0 z-40 glass-panel border-b border-slate-800">
+    <div class="max-w-7xl mx-auto px-4 h-16 flex items-center justify-between gap-3">
+      
+      <div class="flex items-center gap-3">
+        <button id="btnMobileDrawer" class="md:hidden touch-target flex items-center justify-center p-2 rounded-xl bg-slate-900 border border-slate-800 text-slate-300 active:scale-95 transition-transform">
+          <i data-lucide="menu" class="w-5 h-5 text-indigo-400"></i>
+        </button>
+        <div class="flex items-center gap-2.5">
+          <div class="w-9 h-9 rounded-xl bg-gradient-to-tr from-indigo-600 via-violet-600 to-cyan-400 p-[1px] shadow-lg shadow-indigo-500/20">
+            <div class="w-full h-full bg-slate-950 rounded-[11px] flex items-center justify-center">
+              <i data-lucide="compass" class="w-5 h-5 text-cyan-400"></i>
+            </div>
+          </div>
+          <div>
+            <h1 class="text-base font-extrabold tracking-tight text-white leading-none">OmniFeed <span class="text-cyan-400">AI</span></h1>
+            <div class="flex items-center gap-1.5 mt-0.5">
+              <p class="text-[10px] text-slate-400 hidden sm:block tracking-wide uppercase font-semibold">Intelligence & News Desk</p>
+              <span id="cloudSyncIndicator" class="text-[9px] text-emerald-400 flex items-center gap-1 bg-emerald-950/60 border border-emerald-500/30 px-1.5 py-0.2 rounded-full font-mono">
+                <span class="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse"></span> Cloud Sync
+              </span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="flex items-center gap-2">
+        <div id="liveClock" class="hidden lg:flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-slate-900/80 border border-slate-800 text-xs font-mono text-cyan-300">
+          <i data-lucide="clock" class="w-3.5 h-3.5 text-slate-400"></i>
+          <span id="clockTime">--:--:--</span>
+        </div>
+
+        <button id="btnSuperBriefing" class="touch-target inline-flex items-center gap-2 px-3.5 py-2 rounded-xl bg-gradient-to-r from-indigo-600 to-violet-600 hover:from-indigo-500 hover:to-violet-500 active:scale-95 text-white text-xs sm:text-sm font-semibold shadow-lg shadow-indigo-600/30 transition-all cursor-pointer">
+          <i data-lucide="zap" class="w-4 h-4 text-amber-300"></i>
+          <span class="hidden sm:inline">Super-Briefing</span>
+          <span class="sm:hidden">Briefing</span>
+        </button>
+
+        <button id="btnOpenScanner" title="Confronta Prospettive" class="touch-target p-2 rounded-xl bg-slate-900 border border-slate-800 hover:border-indigo-500/50 text-slate-300 hover:text-indigo-400 active:scale-95 transition-all cursor-pointer">
+          <i data-lucide="scale" class="w-5 h-5"></i>
+        </button>
+
+        <button id="btnRefresh" title="Aggiorna sezione" class="touch-target p-2 rounded-xl bg-slate-900 border border-slate-800 text-slate-300 hover:text-cyan-400 active:scale-95 transition-all cursor-pointer">
+          <i data-lucide="refresh-cw" class="w-5 h-5"></i>
+        </button>
+
+        <button id="btnOpenSettings" title="Impostazioni AI" class="touch-target p-2 rounded-xl bg-slate-900 border border-slate-800 text-slate-300 hover:text-white active:scale-95 transition-all cursor-pointer">
+          <i data-lucide="settings" class="w-5 h-5"></i>
+        </button>
+      </div>
+
+    </div>
+  </header>
+
+  <!-- CONTENITORE PRINCIPALE -->
+  <div class="flex-1 max-w-7xl w-full mx-auto px-3 sm:px-6 lg:px-8 py-4 sm:py-6 flex gap-6">
+
+    <!-- SIDEBAR -->
+    <aside id="sidebarDrawer" class="fixed inset-y-0 left-0 z-50 w-80 max-w-[85vw] bg-slate-950/95 backdrop-blur-xl border-r border-slate-800 transform -translate-x-full md:translate-x-0 md:static md:w-72 md:shrink-0 md:border-0 md:bg-transparent transition-transform duration-300 ease-out flex flex-col">
+      
+      <div class="p-4 border-b border-slate-800 flex items-center justify-between md:hidden">
+        <span class="font-bold text-sm text-slate-200 uppercase tracking-wider flex items-center gap-2">
+          <i data-lucide="layers" class="w-4 h-4 text-indigo-400"></i> Canali & Edizioni
+        </span>
+        <button id="btnCloseDrawer" class="touch-target p-2 rounded-lg text-slate-400 hover:text-white">
+          <i data-lucide="x" class="w-5 h-5"></i>
+        </button>
+      </div>
+
+      <div class="p-4 md:p-0 flex-1 overflow-y-auto space-y-6">
+
+        <button onclick="selectCategory('Tutte')" class="w-full flex items-center justify-between px-3.5 py-3 rounded-xl text-sm font-semibold transition-all group bg-gradient-to-r from-slate-900 to-slate-850 border border-slate-800 hover:border-indigo-500/40 text-slate-200 cursor-pointer">
+          <span class="flex items-center gap-2.5">
+            <i data-lucide="globe" class="w-4 h-4 text-cyan-400"></i>
+            Tutte le Notizie
+          </span>
+          <span id="badgeAllCount" class="text-xs px-2 py-0.5 rounded-full bg-slate-800 text-slate-400 font-mono">0</span>
+        </button>
+
+        <!-- SEZIONE 1: RASSEGNA PER PAESE -->
+        <div>
+          <div class="flex items-center justify-between px-2 mb-2.5">
+            <h2 class="text-[11px] font-bold text-slate-400 uppercase tracking-wider flex items-center gap-1.5">
+              <i data-lucide="map-pin" class="w-3.5 h-3.5 text-indigo-400"></i> Rassegna per Paese
+            </h2>
+            <button id="btnOpenAddCountry" class="text-[11px] text-cyan-400 hover:text-cyan-300 font-semibold flex items-center gap-1 active:scale-95 cursor-pointer">
+              <i data-lucide="plus" class="w-3 h-3"></i> Paese
+            </button>
+          </div>
+          <div id="countriesAccordion" class="space-y-2"></div>
+        </div>
+
+        <!-- SEZIONE 2: APPROFONDIMENTO & SCIENZE -->
+        <div>
+          <div class="px-2 mb-2.5">
+            <h2 class="text-[11px] font-bold text-slate-400 uppercase tracking-wider flex items-center gap-1.5">
+              <i data-lucide="sparkle" class="w-3.5 h-3.5 text-violet-400"></i> Approfondimento & Scienze
+            </h2>
+          </div>
+          <div class="space-y-1" id="scienceChannelsList"></div>
+        </div>
+
+        <!-- GESTIONE FONTI -->
+        <div class="pt-4 border-t border-slate-800/80">
+          <div class="flex items-center justify-between px-2 mb-2">
+            <h2 class="text-[11px] font-bold text-slate-400 uppercase tracking-wider">Fonti Cloud (<span id="countSources">0</span>)</h2>
+            <div class="flex items-center gap-2">
+              <button onclick="forceResetFeeds()" title="Ripristina impostazioni originali" class="text-[11px] text-amber-400 hover:underline cursor-pointer">
+                Reset
+              </button>
+              <button id="btnOpenAddFeed" class="text-[11px] text-indigo-400 hover:text-indigo-300 font-medium flex items-center gap-0.5 cursor-pointer">
+                <i data-lucide="plus-circle" class="w-3 h-3"></i> Aggiungi
+              </button>
+            </div>
+          </div>
+          <div id="sourcesContainer" class="space-y-1 max-h-48 overflow-y-auto pr-1 text-xs"></div>
+        </div>
+
+      </div>
+    </aside>
+
+    <div id="drawerBackdrop" class="fixed inset-0 z-40 bg-black/60 backdrop-blur-sm hidden md:hidden"></div>
+
+    <!-- MAIN FEED -->
+    <main class="flex-1 min-w-0">
+
+      <!-- BARRA CONTESTUALE -->
+      <div class="glass-card rounded-2xl p-4 mb-4 flex flex-wrap items-center justify-between gap-3 border-indigo-500/20">
+        <div class="flex items-center gap-3">
+          <div id="activeIconContainer" class="w-10 h-10 rounded-xl bg-indigo-500/20 border border-indigo-500/30 flex items-center justify-center text-indigo-400 font-bold text-lg">
+            🇮🇹
+          </div>
+          <div>
+            <div class="flex items-center gap-2">
+              <h2 id="activeCategoryTitle" class="text-base sm:text-lg font-bold text-white tracking-tight">Italia • Primo Piano</h2>
+              <span id="activeChannelBadge" class="text-[10px] font-semibold px-2 py-0.5 rounded-full bg-slate-800 text-slate-300 border border-slate-700">Edizione Nazionale</span>
+            </div>
+            <p id="activeCategorySubtitle" class="text-xs text-slate-400">Sincronizzazione globale Cloudflare Workers KV attiva</p>
+          </div>
+        </div>
+
+        <div class="flex flex-wrap items-center gap-3 w-full sm:w-auto justify-between sm:justify-end pt-2 sm:pt-0 border-t sm:border-t-0 border-slate-800">
+          <label class="flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-indigo-500/15 border border-indigo-500/30 text-xs text-cyan-300 font-semibold cursor-pointer select-none hover:bg-indigo-500/25 transition-colors">
+            <input type="checkbox" id="checkAutoTranslate" class="rounded bg-slate-900 border-slate-700 text-indigo-600 focus:ring-0">
+            <span>🇮🇹 Traduci in IT</span>
+          </label>
+
+          <label class="flex items-center gap-1.5 text-xs text-slate-300 cursor-pointer select-none">
+            <input type="checkbox" id="checkUnreadOnly" class="rounded bg-slate-800 border-slate-700 text-indigo-600 focus:ring-0">
+            <span>Solo non letti</span>
+          </label>
+          <span class="text-slate-700">|</span>
+          <span id="statFilteredCount" class="text-xs font-mono text-cyan-400 font-medium">0 articoli</span>
+        </div>
+      </div>
+
+      <!-- BARRA DI RICERCA -->
+      <div class="glass-panel rounded-xl p-2.5 mb-5 flex items-center gap-2.5">
+        <i data-lucide="search" class="w-4 h-4 text-slate-400 ml-1.5 shrink-0"></i>
+        <input id="inputSearch" type="text" placeholder="Filtra notizie per parole chiave..." class="w-full bg-transparent text-sm text-slate-100 placeholder-slate-500 outline-none">
+        <button id="btnClearSearch" class="hidden touch-target p-1 text-slate-400 hover:text-white cursor-pointer">
+          <i data-lucide="x" class="w-4 h-4"></i>
+        </button>
+      </div>
+
+      <!-- GRIGLIA ARTICOLI -->
+      <div id="articlesGrid" class="grid grid-cols-1 md:grid-cols-2 gap-4"></div>
+
+      <!-- STATO VUOTO -->
+      <div id="emptyFeedState" class="hidden text-center py-16 px-4 glass-card rounded-2xl border-dashed border-slate-800">
+        <div class="w-14 h-14 mx-auto rounded-2xl bg-slate-900 border border-slate-800 flex items-center justify-center mb-3 text-slate-500">
+          <i data-lucide="rss" class="w-7 h-7 text-indigo-400"></i>
+        </div>
+        <h3 class="text-base font-bold text-slate-200">Nessun articolo per questa selezione</h3>
+        <p id="emptyDiagnosticMsg" class="text-xs text-slate-400 mt-1 max-w-md mx-auto">Non ci sono notizie recenti o la categoria selezionata non ha feed attivi.</p>
+        <div class="mt-4 flex items-center justify-center gap-2">
+          <button onclick="loadActiveCategory(true)" class="px-3.5 py-2 bg-indigo-600 hover:bg-indigo-500 text-white rounded-xl text-xs font-semibold cursor-pointer transition-colors flex items-center gap-1.5">
+            <i data-lucide="refresh-cw" class="w-3.5 h-3.5"></i> Riprova a scaricare
+          </button>
+        </div>
+      </div>
+
+    </main>
+
+  </div>
+
+  <!-- BOTTOM NAVIGATION BAR (Mobile) -->
+  <nav class="md:hidden fixed bottom-0 inset-x-0 z-40 glass-panel border-t border-slate-800 py-2 px-4 flex items-center justify-around shadow-2xl">
+    <button onclick="window.scrollTo({top:0, behavior:'smooth'})" class="flex flex-col items-center gap-1 text-slate-400 hover:text-cyan-400">
+      <i data-lucide="newspaper" class="w-5 h-5"></i>
+      <span class="text-[10px] font-medium">Feed</span>
+    </button>
+    <button onclick="document.getElementById('btnMobileDrawer').click()" class="flex flex-col items-center gap-1 text-slate-400 hover:text-indigo-400">
+      <i data-lucide="compass" class="w-5 h-5"></i>
+      <span class="text-[10px] font-medium">Canali</span>
+    </button>
+    <button onclick="openPerspectiveScanner()" class="flex flex-col items-center gap-1 text-indigo-400">
+      <div class="w-8 h-8 rounded-full bg-gradient-to-tr from-indigo-600 to-violet-600 flex items-center justify-center text-white shadow-md shadow-indigo-600/30">
+        <i data-lucide="scale" class="w-4 h-4"></i>
+      </div>
+      <span class="text-[10px] font-medium text-slate-300">Confronta</span>
+    </button>
+    <button onclick="triggerSuperBriefing()" class="flex flex-col items-center gap-1 text-slate-400 hover:text-amber-300">
+      <i data-lucide="zap" class="w-5 h-5"></i>
+      <span class="text-[10px] font-medium">Briefing</span>
+    </button>
+    <button onclick="document.getElementById('btnOpenSettings').click()" class="flex flex-col items-center gap-1 text-slate-400 hover:text-white">
+      <i data-lucide="settings" class="w-5 h-5"></i>
+      <span class="text-[10px] font-medium">AI</span>
+    </button>
+  </nav>
+
+  <!-- MODAL: LETTURA PULITA -->
+  <div id="modalReader" class="fixed inset-0 z-50 bg-black/85 backdrop-blur-md hidden flex items-center justify-center p-0 sm:p-4">
+    <div class="bg-slate-950 border border-slate-800 w-full sm:max-w-3xl h-full sm:h-auto sm:max-h-[92vh] sm:rounded-2xl shadow-2xl flex flex-col overflow-hidden">
+      <div class="h-1 bg-slate-900 w-full">
+        <div id="readingProgress" class="h-full bg-gradient-to-r from-indigo-500 to-cyan-400 w-0 transition-all duration-150"></div>
+      </div>
+      <div class="p-3 sm:p-4 border-b border-slate-800 flex items-center justify-between bg-slate-900/90 gap-2">
+        <div class="flex items-center gap-2 min-w-0">
+          <span id="readerSourceBadge" class="text-[11px] font-bold px-2 py-0.5 rounded-md bg-indigo-500/20 text-indigo-300 border border-indigo-500/30 shrink-0">Fonte</span>
+          <span id="readerDateBadge" class="text-xs text-slate-400 truncate">Data</span>
+        </div>
+        <div class="flex items-center gap-1.5 shrink-0">
+          <button id="readerBtnTranslateFull" class="touch-target inline-flex items-center gap-1 px-2.5 py-1.5 rounded-lg bg-cyan-600/20 border border-cyan-500/40 text-cyan-300 hover:bg-cyan-600 hover:text-slate-950 text-xs font-semibold transition-all cursor-pointer">
+            <i data-lucide="languages" class="w-3.5 h-3.5"></i>
+            <span>Traduci Testo</span>
+          </button>
+          <button id="readerBtnSummarize" class="touch-target inline-flex items-center gap-1 px-2.5 py-1.5 rounded-lg bg-indigo-600/30 border border-indigo-500/40 text-indigo-300 hover:bg-indigo-600 hover:text-white text-xs font-semibold transition-all cursor-pointer">
+            <i data-lucide="sparkles" class="w-3.5 h-3.5 text-amber-300"></i>
+            <span>Sintesi (1/3)</span>
+          </button>
+          <a id="readerExternalLink" href="#" target="_blank" class="touch-target p-2 text-slate-400 hover:text-white" title="Sito originale">
+            <i data-lucide="external-link" class="w-4 h-4"></i>
+          </a>
+          <button id="readerClose" class="touch-target p-2 text-slate-400 hover:text-white cursor-pointer">
+            <i data-lucide="x" class="w-5 h-5"></i>
+          </button>
+        </div>
+      </div>
+      <div id="readerScrollArea" class="p-5 sm:p-8 overflow-y-auto flex-1 text-slate-200">
+        <h1 id="readerTitle" class="text-xl sm:text-2xl md:text-3xl font-extrabold text-white leading-tight mb-4">Titolo</h1>
+        <div id="readerSummaryBox" class="hidden mb-6 p-4 rounded-xl bg-gradient-to-br from-indigo-950/70 to-slate-900 border border-indigo-500/40 text-sm">
+          <div class="flex items-center justify-between font-bold text-indigo-300 mb-2">
+            <span class="flex items-center gap-1.5"><i data-lucide="bot" class="w-4 h-4 text-cyan-400"></i> Sintesi AI (1/3)</span>
+            <span class="text-[10px] text-slate-400 uppercase">Italiano</span>
+          </div>
+          <div id="readerSummaryContent" class="leading-relaxed text-slate-200 whitespace-pre-line text-sm"></div>
+        </div>
+        <div id="readerContent" class="prose-reader text-slate-300 text-base sm:text-lg"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- MODAL: CONFRONTA LA NOTIZIA -->
+  <div id="modalCompare" class="fixed inset-0 z-50 bg-black/85 backdrop-blur-md hidden flex items-center justify-center p-0 sm:p-4">
+    <div class="bg-slate-950 border border-slate-800 w-full sm:max-w-4xl h-full sm:h-auto sm:max-h-[92vh] sm:rounded-2xl shadow-2xl flex flex-col overflow-hidden">
+      <div class="p-4 border-b border-slate-800 flex items-center justify-between bg-slate-900/90">
+        <div class="flex items-center gap-2.5">
+          <div class="w-8 h-8 rounded-lg bg-violet-600/20 border border-violet-500/30 flex items-center justify-center text-violet-400">
+            <i data-lucide="scale" class="w-4 h-4"></i>
+          </div>
+          <div>
+            <h3 class="font-bold text-white text-sm sm:text-base">Scanner Prospettive & Confronto Notizia</h3>
+            <p class="text-[11px] text-slate-400">Analisi incrociata tra testate italiane ed estere</p>
+          </div>
+        </div>
+        <button id="compareClose" class="touch-target p-2 text-slate-400 hover:text-white cursor-pointer"><i data-lucide="x" class="w-5 h-5"></i></button>
+      </div>
+      <div class="p-4 bg-slate-900/50 border-b border-slate-800/80 flex flex-col sm:flex-row gap-2.5">
+        <div class="relative flex-1">
+          <i data-lucide="search" class="w-4 h-4 absolute left-3 top-3 text-slate-400"></i>
+          <input id="inputCompareTopic" type="text" placeholder="Es: Elezioni, diplomazia, economia..." class="w-full bg-slate-950 border border-slate-800 rounded-xl pl-9 pr-3 py-2 text-sm text-slate-100 placeholder-slate-500 outline-none focus:border-indigo-500">
+        </div>
+        <button id="btnRunCompare" class="touch-target px-4 py-2 rounded-xl bg-gradient-to-r from-violet-600 to-indigo-600 hover:from-violet-500 hover:to-indigo-500 text-white font-semibold text-xs sm:text-sm flex items-center justify-center gap-2 shadow-lg shadow-violet-600/30 active:scale-95 transition-all cursor-pointer">
+          <i data-lucide="sparkles" class="w-4 h-4 text-cyan-300"></i>
+          <span>Analizza Prospettive</span>
+        </button>
+      </div>
+      <div class="p-5 sm:p-6 overflow-y-auto flex-1 text-slate-200">
+        <div id="compareLoading" class="hidden py-12 text-center text-slate-400">
+          <i data-lucide="loader-2" class="w-8 h-8 mx-auto mb-3 animate-spin text-cyan-400"></i>
+          <p class="font-semibold text-white text-sm sm:text-base">Scansione incrociata delle testate in corso...</p>
+        </div>
+        <div id="compareReport" class="hidden space-y-4"></div>
+        <div id="compareInitialState" class="py-10 text-center text-slate-500">
+          <i data-lucide="split" class="w-10 h-10 mx-auto mb-2 text-slate-600"></i>
+          <p class="text-sm">Inserisci un tema caldo oppure clicca sull'icona della bilancia <strong>«⚖️»</strong> su qualsiasi articolo.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- MODAL: AGGIUNGI PAESE -->
+  <div id="modalAddCountry" class="fixed inset-0 z-50 bg-black/80 backdrop-blur-md hidden flex items-center justify-center p-4">
+    <div class="bg-slate-900 border border-slate-800 w-full max-w-md rounded-2xl p-5 shadow-2xl">
+      <div class="flex items-center justify-between mb-4">
+        <h3 class="text-base font-bold text-white flex items-center gap-2">
+          <i data-lucide="flag" class="w-4 h-4 text-cyan-400"></i> Aggiungi Edizione Paese
+        </h3>
+        <button id="addCountryClose" class="touch-target p-1 text-slate-400 hover:text-white cursor-pointer"><i data-lucide="x" class="w-5 h-5"></i></button>
+      </div>
+      <p class="text-xs text-slate-400 mb-3">Seleziona una nazione con feed pronti all'uso:</p>
+      <div class="grid grid-cols-2 gap-2 mb-4">
+        <button onclick="addPresetCountry('Francia', '🇫🇷', 'https://www.lemonde.fr/rss/une.xml', 'Le Monde')" class="p-2.5 rounded-xl bg-slate-950 border border-slate-800 hover:border-indigo-500 text-left text-xs font-semibold flex items-center gap-2 text-slate-200 cursor-pointer">
+          <span class="text-lg">🇫🇷</span> Francia (Le Monde)
+        </button>
+        <button onclick="addPresetCountry('Spagna', '🇪🇸', 'https://feeds.elpais.com/mrss-s/pages/ep/site/elpais.com/portada', 'El País España')" class="p-2.5 rounded-xl bg-slate-950 border border-slate-800 hover:border-indigo-500 text-left text-xs font-semibold flex items-center gap-2 text-slate-200 cursor-pointer">
+          <span class="text-lg">🇪🇸</span> Spagna (El País)
+        </button>
+        <button onclick="addPresetCountry('Germania', '🇩🇪', 'https://www.spiegel.de/schlagzeilen/index.rss', 'Der Spiegel')" class="p-2.5 rounded-xl bg-slate-950 border border-slate-800 hover:border-indigo-500 text-left text-xs font-semibold flex items-center gap-2 text-slate-200 cursor-pointer">
+          <span class="text-lg">🇩🇪</span> Germania (Spiegel)
+        </button>
+        <button onclick="addPresetCountry('Svizzera', '🇨🇭', 'https://www.nzz.ch/recent.rss', 'NZZ')" class="p-2.5 rounded-xl bg-slate-950 border border-slate-800 hover:border-indigo-500 text-left text-xs font-semibold flex items-center gap-2 text-slate-200 cursor-pointer">
+          <span class="text-lg">🇨🇭</span> Svizzera (NZZ)
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- MODAL: AGGIUNGI FEED -->
+  <div id="modalAddFeed" class="fixed inset-0 z-50 bg-black/80 backdrop-blur-md hidden flex items-center justify-center p-4">
+    <div class="bg-slate-900 border border-slate-800 w-full max-w-md rounded-2xl p-5 shadow-2xl">
+      <div class="flex items-center justify-between mb-4">
+        <h3 class="text-base font-bold text-white flex items-center gap-2">
+          <i data-lucide="sparkles" class="w-4 h-4 text-cyan-400"></i> Connetti Nuova Fonte RSS
+        </h3>
+        <button id="addFeedClose" class="touch-target p-1 text-slate-400 hover:text-white cursor-pointer"><i data-lucide="x" class="w-5 h-5"></i></button>
+      </div>
+      <div class="space-y-3">
+        <div>
+          <label class="block text-[11px] font-semibold text-slate-400 mb-1">Nome della Testata (es. Adnkronos, Il Post, Valigia Blu, ANSA)</label>
+          <div class="flex gap-2">
+            <input id="inputFeedSearchName" type="text" placeholder="Scrivi il nome..." class="flex-1 bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-xs text-white outline-none focus:border-indigo-500">
+            <button id="btnAiSearchRss" type="button" class="px-3 py-2 bg-gradient-to-r from-cyan-600 to-indigo-600 hover:from-cyan-500 hover:to-indigo-500 text-white rounded-xl text-xs font-semibold cursor-pointer flex items-center gap-1 shrink-0">
+              <i data-lucide="search" class="w-3.5 h-3.5"></i> Cerca & Collauda Feed
+            </button>
+          </div>
+          <p id="aiSearchStatus" class="text-[10px] text-slate-500 mt-1">Collaudo in tempo reale tramite Cloudflare Worker.</p>
+        </div>
+
+        <div>
+          <label class="block text-[11px] font-semibold text-slate-400 mb-1">URL Feed RSS Diretto</label>
+          <input id="inputFeedUrl" type="url" placeholder="https://dominio.com/feed.xml" class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-xs text-white outline-none font-mono">
+        </div>
+
+        <div>
+          <label class="block text-[11px] font-semibold text-slate-400 mb-1">Associa a Categoria</label>
+          <select id="selectFeedDestination" class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-xs text-white outline-none focus:border-indigo-500"></select>
+        </div>
+
+        <button id="btnSaveFeed" class="w-full py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white font-semibold text-xs transition-colors mt-2 cursor-pointer">
+          Salva e Sincronizza nel Cloud
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- MODAL: SUPER-BRIEFING -->
+  <div id="modalBriefing" class="fixed inset-0 z-50 bg-black/85 backdrop-blur-md hidden flex items-center justify-center p-0 sm:p-4">
+    <div class="bg-slate-950 border border-slate-800 w-full sm:max-w-2xl h-full sm:h-auto sm:max-h-[90vh] sm:rounded-2xl shadow-2xl flex flex-col overflow-hidden">
+      <div class="p-4 border-b border-slate-800 flex items-center justify-between bg-slate-900">
+        <div class="flex items-center gap-2">
+          <i data-lucide="zap" class="w-5 h-5 text-amber-400"></i>
+          <h3 id="briefingModalTitle" class="font-bold text-white text-base">Super-Briefing</h3>
+        </div>
+        <button id="briefingClose" class="touch-target p-2 text-slate-400 hover:text-white"><i data-lucide="x" class="w-5 h-5"></i></button>
+      </div>
+      <div class="p-5 sm:p-6 overflow-y-auto flex-1 text-slate-200">
+        <div id="briefingLoading" class="hidden py-10 text-center text-slate-400">
+          <i data-lucide="loader-2" class="w-8 h-8 mx-auto mb-3 animate-spin text-indigo-400"></i>
+          <p class="font-semibold text-white">Sintesi d'insieme in corso...</p>
+        </div>
+        <div id="briefingTextContent" class="leading-relaxed text-sm sm:text-base whitespace-pre-line text-slate-300"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- MODAL: IMPOSTAZIONI AI -->
+  <div id="modalSettings" class="fixed inset-0 z-50 bg-black/80 backdrop-blur-md hidden flex items-center justify-center p-4">
+    <div class="bg-slate-900 border border-slate-800 w-full max-w-md rounded-2xl p-5 shadow-2xl">
+      <div class="flex items-center justify-between mb-3">
+        <h3 class="text-base font-bold text-white flex items-center gap-2">
+          <i data-lucide="sparkles" class="w-4 h-4 text-cyan-400"></i> Motore AI Google Gemini
+        </h3>
+        <button id="settingsClose" class="touch-target p-1 text-slate-400 hover:text-white"><i data-lucide="x" class="w-5 h-5"></i></button>
+      </div>
+      <p class="text-xs text-slate-400 mb-3 leading-relaxed">
+        Inserisci la tua chiave API gratuita di Google AI Studio:
+      </p>
+      <div class="space-y-3">
+        <input id="inputApiKey" type="password" placeholder="AIzaSy..." class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2.5 text-xs text-white font-mono outline-none focus:border-cyan-400">
+        <div class="flex items-center justify-between pt-1">
+          <a href="https://aistudio.google.com/app/apikey" target="_blank" class="text-xs text-cyan-400 hover:underline flex items-center gap-1">
+            Prendi chiave gratuita <i data-lucide="external-link" class="w-3 h-3"></i>
+          </a>
+          <button id="btnSaveApiKey" class="px-4 py-2 rounded-xl bg-cyan-500 hover:bg-cyan-400 text-slate-950 font-bold text-xs transition-colors cursor-pointer">
+            Salva Chiave
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- JAVASCRIPT: WORKER DEDICATO CON SINCRONIZZAZIONE CLOUD KV -->
+  <script>
+    let globalArticleCounter = 0;
+
+    // ENDPOINT DEL TUO WORKER CLOUDFLARE
+    const WORKER_BASE = "https://omnifeed-proxy.filippoinnocenti1977.workers.dev/";
+    const CLOUDFLARE_WORKER_PROXY = `${WORKER_BASE}?url=`;
+    const CLOUDFLARE_SYNC_ENDPOINT = `${WORKER_BASE}?sync=1`;
+
+    function makeUniqueArticleId(link, title) {
+      globalArticleCounter++;
+      const str = (link || '') + '||' + (title || '');
+      let hash = 0;
+      for (let i = 0; i < str.length; i++) {
+        hash = ((hash << 5) - hash) + str.charCodeAt(i);
+        hash |= 0;
+      }
+      return 'art_' + Math.abs(hash).toString(36) + '_' + globalArticleCounter;
+    }
+
+    const KNOWN_FEEDS_DIRECTORY = [
+      { keys: ['il post', 'post'], name: 'Il Post', url: 'https://www.ilpost.it/feed/' },
+      { keys: ['adnkronos', 'adn kronos'], name: 'Adnkronos', url: 'https://www.adnkronos.com/RSS_PrimaPagina.xml' },
+      { keys: ['ansa', 'ansa primo piano'], name: 'ANSA', url: 'https://www.ansa.it/sito/ansait_rss.xml' },
+      { keys: ['ansa cronaca'], name: 'ANSA Cronaca', url: 'https://www.ansa.it/sito/notizie/cronaca/cronaca_rss.xml' },
+      { keys: ['ansa politica'], name: 'ANSA Politica', url: 'https://www.ansa.it/sito/notizie/politica/politica_rss.xml' },
+      { keys: ['ansa cultura', 'ansa arte'], name: 'ANSA Cultura & Arte', url: 'https://www.ansa.it/sito/notizie/cultura/cultura_rss.xml' },
+      { keys: ['artribune', 'arte'], name: 'Artribune', url: 'https://www.artribune.com/feed/' },
+      { keys: ['valigia blu', 'valigiablu'], name: 'Valigia Blu', url: 'https://www.valigiablu.it/feed/' },
+      { keys: ['le monde', 'monde'], name: 'Le Monde', url: 'https://www.lemonde.fr/rss/une.xml' },
+      { keys: ['le figaro', 'figaro'], name: 'Le Figaro', url: 'https://www.lefigaro.fr/rss/figaro_actualites.xml' },
+      { keys: ['repubblica', 'la repubblica'], name: 'La Repubblica', url: 'https://www.repubblica.it/rss/homepage/rss2.0.xml' },
+      { keys: ['corriere', 'corriere della sera'], name: 'Corriere della Sera', url: 'https://xml2.corriereobjects.it/rss/homepage.xml' },
+      { keys: ['il fatto', 'fatto quotidiano'], name: 'Il Fatto Quotidiano', url: 'https://www.ilfattoquotidiano.it/feed/' },
+      { keys: ['sky tg24', 'sky'], name: 'Sky TG24', url: 'https://tg24.sky.it/rss/tg24_home.xml' },
+      { keys: ['el pais', 'elpais'], name: 'El País', url: 'https://feeds.elpais.com/mrss-s/pages/ep/site/elpais.com/portada' },
+      { keys: ['el mundo', 'elmundo'], name: 'El Mundo', url: 'https://e00-elmundo.uecdn.es/elmundo/rss/portada.xml' },
+      { keys: ['clarin', 'clarín'], name: 'Clarín', url: 'https://www.clarin.com/rss/lo-ultimo/' },
+      { keys: ['bbc', 'bbc news'], name: 'BBC News', url: 'https://feeds.bbci.co.uk/news/rss.xml' },
+      { keys: ['guardian', 'the guardian'], name: 'The Guardian', url: 'https://www.theguardian.com/world/rss' },
+      { keys: ['new york times', 'nyt'], name: 'The New York Times', url: 'https://rss.nytimes.com/services/xml/rss/nyt/HomePage.xml' },
+      { keys: ['spiegel', 'der spiegel'], name: 'Der Spiegel', url: 'https://www.spiegel.de/schlagzeilen/index.rss' },
+      { keys: ['wired', 'wired italia'], name: 'Wired Italia', url: 'https://www.wired.it/feed/' },
+      { keys: ['open', 'open online'], name: 'Open', url: 'https://www.open.online/feed/' },
+      { keys: ['fanpage'], name: 'Fanpage', url: 'https://www.fanpage.it/feed/' }
+    ];
+
+    const DEFAULT_COUNTRIES = [
+      {
+        id: 'it',
+        name: 'Italia',
+        flag: '🇮🇹',
+        subcategories: ['Primo Piano', 'Politica', 'Cronaca', 'Cultura']
+      },
+      {
+        id: 'ar',
+        name: 'Argentina',
+        flag: '🇦🇷',
+        subcategories: ['Top Stories', 'Politica', 'Società & Cultura']
+      },
+      {
+        id: 'us',
+        name: 'Stati Uniti',
+        flag: '🇺🇸',
+        subcategories: ['Top Stories', 'Politics', 'Society', 'Culture']
+      },
+      {
+        id: 'uk',
+        name: 'Regno Unito',
+        flag: '🇬🇧',
+        subcategories: ['Top Headlines', 'UK Politics', 'Society', 'Culture & Arts']
+      }
+    ];
+
+    const SCIENCE_CATEGORIES = [
+      { id: 'sci_fisica', name: 'Scienza & Fisica', icon: 'atom' },
+      { id: 'sci_psico', name: 'Psicologia & Scienze Umane', icon: 'brain' },
+      { id: 'sci_arte', name: 'Storia & Arte', icon: 'palette' },
+      { id: 'sci_geopolitica', name: 'Geopolitica & Grandi Scenari', icon: 'shield-alert' }
+    ];
+
+    const INITIAL_FEEDS = [
+      { id: 'f_it_1', name: 'ANSA Prima Pagina', url: 'https://www.ansa.it/sito/ansait_rss.xml', categoryKey: 'it:Primo Piano' },
+      { id: 'f_it_2', name: 'Il Post', url: 'https://www.ilpost.it/feed/', categoryKey: 'it:Primo Piano' },
+      { id: 'f_it_3', name: 'ANSA Cronaca', url: 'https://www.ansa.it/sito/notizie/cronaca/cronaca_rss.xml', categoryKey: 'it:Cronaca' },
+      { id: 'f_it_4', name: 'ANSA Politica', url: 'https://www.ansa.it/sito/notizie/politica/politica_rss.xml', categoryKey: 'it:Politica' },
+      { id: 'f_it_5', name: 'ANSA Cultura', url: 'https://www.ansa.it/sito/notizie/cultura/cultura_rss.xml', categoryKey: 'it:Cultura' },
+      
+      { id: 'f_ar_1', name: 'El País América (AR)', url: 'https://feeds.elpais.com/mrss-s/pages/ep/site/elpais.com/america', categoryKey: 'ar:Top Stories' },
+      { id: 'f_ar_2', name: 'BBC Mundo (Cono Sur)', url: 'https://feeds.bbci.co.uk/mundo/rss.xml', categoryKey: 'ar:Top Stories' },
+      
+      { id: 'f_us_1', name: 'NPR News (Top)', url: 'https://feeds.npr.org/1001/rss.xml', categoryKey: 'us:Top Stories' },
+      { id: 'f_uk_1', name: 'BBC News (Top)', url: 'https://feeds.bbci.co.uk/news/rss.xml', categoryKey: 'uk:Top Headlines' },
+      
+      { id: 'f_sc_1', name: 'Phys.org', url: 'https://phys.org/rss-feed/', categoryKey: 'sci_fisica' },
+      { id: 'f_sc_2', name: 'Psychology Today', url: 'https://www.psychologytoday.com/intl/front/feed', categoryKey: 'sci_psico' },
+      { id: 'f_sc_3', name: 'Artribune', url: 'https://www.artribune.com/feed/', categoryKey: 'sci_arte' },
+      { id: 'f_sc_4', name: 'ANSA Cultura & Arte', url: 'https://www.ansa.it/sito/notizie/cultura/cultura_rss.xml', categoryKey: 'sci_arte' },
+      { id: 'f_sc_5', name: 'BBC World News', url: 'https://feeds.bbci.co.uk/news/world/rss.xml', categoryKey: 'sci_geopolitica' }
+    ];
+
+    let state = {
+      countries: JSON.parse(localStorage.getItem('omni_countries')) || DEFAULT_COUNTRIES,
+      feeds: JSON.parse(localStorage.getItem('omni_feeds')) || INITIAL_FEEDS,
+      readArticles: new Set(JSON.parse(localStorage.getItem('omni_read_articles')) || []),
+      apiKey: (localStorage.getItem('omni_gemini_key') || '').trim().replace(/^["']|["']$/g, ''),
+      activeSelection: 'it:Primo Piano',
+      articles: [],
+      articlesCache: {},
+      translationCache: {},
+      activeReaderArticle: null,
+      expandedCountry: 'it'
     };
 
-    if (request.method === "OPTIONS") {
-      return new Response(null, { headers: corsHeaders });
+    document.addEventListener('DOMContentLoaded', async () => {
+      lucide.createIcons();
+      initClock();
+      renderNavigation();
+      renderSourcesList();
+      bindAppEvents();
+      updateActiveCategoryHeader();
+      
+      // Sincronizza le fonti dal Cloudflare KV all'avvio
+      await syncFeedsFromCloud();
+      loadActiveCategory();
+    });
+
+    // --- LOGICA SINCRONIZZAZIONE CLOUD KV ---
+    async function syncFeedsFromCloud() {
+      const indicator = document.getElementById('cloudSyncIndicator');
+      try {
+        const resp = await fetch(CLOUDFLARE_SYNC_ENDPOINT);
+        if (resp.ok) {
+          const cloudFeeds = await resp.json();
+          if (Array.isArray(cloudFeeds) && cloudFeeds.length > 0) {
+            state.feeds = cloudFeeds;
+            localStorage.setItem('omni_feeds', JSON.stringify(cloudFeeds));
+            renderSourcesList();
+            if (indicator) indicator.innerHTML = `<span class="w-1.5 h-1.5 rounded-full bg-emerald-400"></span> Connesso`;
+            return;
+          } else {
+            // Se il database su Cloudflare è vuoto, invia le fonti predefinite
+            await pushFeedsToCloud(state.feeds);
+          }
+        }
+      } catch (e) {
+        console.warn("Sincronizzazione cloud non disponibile, uso fonti locali:", e);
+        if (indicator) indicator.innerHTML = `<span class="w-1.5 h-1.5 rounded-full bg-amber-400"></span> Locale`;
+      }
     }
 
-    const url = new URL(request.url);
+    async function pushFeedsToCloud(feedsList) {
+      const indicator = document.getElementById('cloudSyncIndicator');
+      if (indicator) indicator.innerHTML = `<span class="w-1.5 h-1.5 rounded-full bg-cyan-400 animate-spin"></span> Sync...`;
+      try {
+        await fetch(CLOUDFLARE_SYNC_ENDPOINT, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(feedsList)
+        });
+        if (indicator) indicator.innerHTML = `<span class="w-1.5 h-1.5 rounded-full bg-emerald-400"></span> Connesso`;
+      } catch (e) {
+        console.error("Errore salvataggio su Cloudflare KV:", e);
+        if (indicator) indicator.innerHTML = `<span class="w-1.5 h-1.5 rounded-full bg-rose-400"></span> Errore Sync`;
+      }
+    }
 
-    // 1. GESTIONE SINCRONIZZAZIONE FONTI CLOUD (KV)
-    if (url.searchParams.has("sync")) {
-      // Lettura delle fonti dal cloud
-      if (request.method === "GET") {
-        try {
-          const data = await env.OMNIFEED_KV.get("user_feeds");
-          return new Response(data || "[]", {
-            headers: { ...corsHeaders, "Content-Type": "application/json" }
+    async function translateToItalian(text) {
+      if (!text || text.trim().length < 3) return text;
+      const cacheKey = text.slice(0, 120);
+      if (state.translationCache[cacheKey]) return state.translationCache[cacheKey];
+
+      try {
+        const url = `https://translate.googleapis.com/translate_a/single?client=gtx&sl=auto&tl=it&dt=t&q=${encodeURIComponent(text)}`;
+        const res = await fetch(url);
+        if (!res.ok) return text;
+        const data = await res.json();
+        if (Array.isArray(data) && Array.isArray(data[0])) {
+          const translated = data[0].map(part => part[0]).join('');
+          state.translationCache[cacheKey] = translated;
+          return translated;
+        }
+      } catch (e) {}
+      return text;
+    }
+
+    async function autoTranslateVisibleArticles() {
+      const autoTranslateOn = document.getElementById('checkAutoTranslate').checked;
+      if (!autoTranslateOn) return;
+      if (state.activeSelection.startsWith('it:') || state.activeSelection === 'sci_arte') return;
+
+      for (const art of state.articles) {
+        if (!art.isTranslated && !art.categoryKey.startsWith('it:') && art.categoryKey !== 'sci_arte') {
+          Promise.all([
+            translateToItalian(art.originalTitle || art.title),
+            translateToItalian(art.originalSnippet || art.snippet)
+          ]).then(([trTitle, trSnippet]) => {
+            art.originalTitle = art.originalTitle || art.title;
+            art.originalSnippet = art.originalSnippet || art.snippet;
+            art.title = trTitle;
+            art.snippet = trSnippet;
+            art.isTranslated = true;
+
+            const titleEl = document.getElementById(`card-title-${art.id}`);
+            const snippetEl = document.getElementById(`card-snippet-${art.id}`);
+            if (titleEl && document.getElementById('checkAutoTranslate').checked) titleEl.textContent = trTitle;
+            if (snippetEl && document.getElementById('checkAutoTranslate').checked) snippetEl.textContent = trSnippet;
           });
-        } catch (e) {
-          return new Response(JSON.stringify({ error: e.message }), { status: 500, headers: corsHeaders });
         }
       }
+    }
 
-      // Salvataggio permanente delle fonti nel cloud
-      if (request.method === "POST") {
-        try {
-          const body = await request.text();
-          await env.OMNIFEED_KV.put("user_feeds", body);
-          return new Response(JSON.stringify({ success: true }), {
-            headers: { ...corsHeaders, "Content-Type": "application/json" }
-          });
-        } catch (e) {
-          return new Response(JSON.stringify({ error: e.message }), { status: 500, headers: corsHeaders });
+    function forceResetFeeds() {
+      state.countries = DEFAULT_COUNTRIES;
+      state.feeds = INITIAL_FEEDS;
+      state.articlesCache = {};
+      saveState();
+      pushFeedsToCloud(INITIAL_FEEDS);
+      renderNavigation();
+      renderSourcesList();
+      loadActiveCategory(true);
+    }
+
+    function initClock() {
+      const el = document.getElementById('clockTime');
+      setInterval(() => {
+        el.textContent = new Date().toLocaleTimeString('it-IT');
+      }, 1000);
+      el.textContent = new Date().toLocaleTimeString('it-IT');
+    }
+
+    function bindAppEvents() {
+      const drawer = document.getElementById('sidebarDrawer');
+      const backdrop = document.getElementById('drawerBackdrop');
+      
+      document.getElementById('btnMobileDrawer').addEventListener('click', () => {
+        drawer.classList.remove('-translate-x-full');
+        backdrop.classList.remove('hidden');
+      });
+      document.getElementById('btnCloseDrawer').addEventListener('click', () => {
+        drawer.classList.add('-translate-x-full');
+        backdrop.classList.add('hidden');
+      });
+      backdrop.addEventListener('click', () => {
+        drawer.classList.add('-translate-x-full');
+        backdrop.classList.add('hidden');
+      });
+
+      const searchInput = document.getElementById('inputSearch');
+      const clearSearch = document.getElementById('btnClearSearch');
+      searchInput.addEventListener('input', () => {
+        clearSearch.classList.toggle('hidden', !searchInput.value);
+        renderArticlesGrid();
+      });
+      clearSearch.addEventListener('click', () => {
+        searchInput.value = '';
+        clearSearch.classList.add('hidden');
+        renderArticlesGrid();
+      });
+
+      document.getElementById('checkUnreadOnly').addEventListener('change', renderArticlesGrid);
+
+      document.getElementById('checkAutoTranslate').addEventListener('change', (e) => {
+        const isChecked = e.target.checked;
+        state.articles.forEach(art => {
+          if (!isChecked && art.originalTitle) {
+            art.title = art.originalTitle;
+            art.snippet = art.originalSnippet;
+            art.isTranslated = false;
+          }
+        });
+        renderArticlesGrid();
+        if (isChecked) autoTranslateVisibleArticles();
+      });
+
+      document.getElementById('btnRefresh').addEventListener('click', () => {
+        const icon = document.querySelector('#btnRefresh i');
+        icon.classList.add('animate-spin');
+        loadActiveCategory(true).finally(() => icon.classList.remove('animate-spin'));
+      });
+
+      setupModal('btnOpenAddCountry', 'modalAddCountry', 'addCountryClose');
+      setupModal('btnOpenAddFeed', 'modalAddFeed', 'addFeedClose');
+      setupModal('btnOpenSettings', 'modalSettings', 'settingsClose');
+      setupModal(null, 'modalReader', 'readerClose');
+      setupModal(null, 'modalBriefing', 'briefingClose');
+      setupModal(null, 'modalCompare', 'compareClose');
+
+      // --- RICERCA E COLLAUDO FEED ---
+      document.getElementById('btnAiSearchRss').addEventListener('click', async () => {
+        const nameInput = document.getElementById('inputFeedSearchName');
+        const urlInput = document.getElementById('inputFeedUrl');
+        const statusEl = document.getElementById('aiSearchStatus');
+        const query = nameInput.value.trim().toLowerCase();
+        let manualUrl = urlInput.value.trim();
+
+        if (!query && !manualUrl) {
+          statusEl.textContent = '⚠️ Scrivi il nome della testata o inserisci un URL.';
+          statusEl.className = 'text-[10px] text-amber-400 mt-1';
+          return;
         }
-      }
-    }
 
-    // 2. GESTIONE PROXY RSS PER LE TESTATE
-    const targetUrl = url.searchParams.get("url");
-    if (!targetUrl) {
-      return new Response("Parametro mancante. Usa ?url= oppure ?sync=1", { status: 400, headers: corsHeaders });
-    }
+        statusEl.textContent = `🔍 Ricerca e collaudo feed in corso...`;
+        statusEl.className = 'text-[10px] text-cyan-400 mt-1 animate-pulse';
 
-    try {
-      const response = await fetch(targetUrl, {
-        headers: {
-          "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36",
-          "Accept": "application/rss+xml, application/xml, text/xml, */*"
+        let candidateUrl = manualUrl;
+        let matchedName = nameInput.value.trim();
+
+        if (query) {
+          for (const item of KNOWN_FEEDS_DIRECTORY) {
+            if (item.keys.some(k => query.includes(k))) {
+              candidateUrl = item.url;
+              matchedName = item.name;
+              break;
+            }
+          }
+
+          if (!candidateUrl) {
+            try {
+              const prompt = `Restituisci ESCLUSIVAMENTE l'URL diretto del feed RSS ufficiale (file XML) della testata "${query}". Solo il link http/https, niente testo.`;
+              const geminiUrl = await queryGemini(prompt);
+              const clean = geminiUrl.trim().replace(/^["']|["']$/g, '').split('\n')[0];
+              if (clean.startsWith('http')) candidateUrl = clean;
+            } catch (e) {}
+          }
+        }
+
+        if (!candidateUrl) {
+          statusEl.innerHTML = `❌ Testata non trovata. Inserisci l'indirizzo XML a mano.`;
+          statusEl.className = 'text-[10px] text-rose-400 mt-1';
+          return;
+        }
+
+        urlInput.value = candidateUrl;
+        if (matchedName) nameInput.value = matchedName;
+
+        statusEl.textContent = `⏳ Collaudo con Cloudflare Worker in corso...`;
+        let testItems = await fetchFeedArticles({ url: candidateUrl, name: matchedName || 'Test', categoryKey: 'test' });
+
+        if ((!testItems || testItems.length === 0) && query.includes('adnkronos')) {
+          const fallbackUrl = `https://news.google.com/rss/search?q=site:adnkronos.com&hl=it&gl=IT&ceid=IT:it`;
+          testItems = await fetchFeedArticles({ url: fallbackUrl, name: matchedName || 'Adnkronos', categoryKey: 'test' });
+          if (testItems && testItems.length > 0) {
+            candidateUrl = fallbackUrl;
+            urlInput.value = fallbackUrl;
+          }
+        }
+
+        if (testItems && testItems.length > 0) {
+          statusEl.innerHTML = `🟢 <strong>Feed collaudato con successo!</strong> Trovati ${testItems.length} articoli con il tuo Cloudflare Worker.`;
+          statusEl.className = 'text-[10px] text-emerald-400 mt-1';
+        } else {
+          statusEl.innerHTML = `🔴 <strong>Attenzione:</strong> La testata applica blocchi stringenti o il link non risponde. Prova con un'altra fonte.`;
+          statusEl.className = 'text-[10px] text-rose-400 mt-1';
         }
       });
 
-      const body = await response.text();
-      return new Response(body, {
-        status: response.status,
-        headers: {
-          ...corsHeaders,
-          "Content-Type": response.headers.get("Content-Type") || "application/xml; charset=utf-8"
+      // --- SALVATAGGIO CON SINCRONIZZAZIONE CLOUD KV ---
+      document.getElementById('btnSaveFeed').addEventListener('click', async () => {
+        const name = document.getElementById('inputFeedSearchName').value.trim() || 'Nuova Fonte';
+        const url = document.getElementById('inputFeedUrl').value.trim();
+        const categoryKey = document.getElementById('selectFeedDestination').value;
+        if (name && url) {
+          state.feeds.push({ id: 'custom_' + Date.now(), name, url, categoryKey });
+          saveState();
+          pushFeedsToCloud(state.feeds);
+          renderSourcesList();
+          delete state.articlesCache[categoryKey];
+          document.getElementById('modalAddFeed').classList.add('hidden');
+          document.getElementById('inputFeedSearchName').value = '';
+          document.getElementById('inputFeedUrl').value = '';
+          document.getElementById('aiSearchStatus').textContent = 'Collaudo in tempo reale tramite Cloudflare Worker.';
+          document.getElementById('aiSearchStatus').className = 'text-[10px] text-slate-500 mt-1';
+          
+          selectCategory(categoryKey);
         }
       });
-    } catch (e) {
-      return new Response("Errore recupero feed: " + e.message, { status: 500, headers: corsHeaders });
+
+      document.getElementById('btnOpenScanner').addEventListener('click', () => openPerspectiveScanner());
+      document.getElementById('btnRunCompare').addEventListener('click', () => {
+        const query = document.getElementById('inputCompareTopic').value.trim();
+        if (query) executePerspectiveAnalysis(query);
+      });
+
+      document.getElementById('btnSuperBriefing').addEventListener('click', triggerSuperBriefing);
+
+      document.getElementById('btnSaveApiKey').addEventListener('click', () => {
+        const val = document.getElementById('inputApiKey').value.trim().replace(/^["']|["']$/g, '');
+        state.apiKey = val;
+        localStorage.setItem('omni_gemini_key', val);
+        availableGoogleModels = [];
+        document.getElementById('modalSettings').classList.add('hidden');
+        alert('Chiave salvata! Il motore AI si sincronizzerà con i tuoi modelli attivi.');
+      });
+
+      document.getElementById('readerBtnSummarize').addEventListener('click', () => {
+        if (state.activeReaderArticle) requestArticleSummary(state.activeReaderArticle);
+      });
+
+      document.getElementById('readerBtnTranslateFull').addEventListener('click', async () => {
+        if (!state.activeReaderArticle) return;
+        const contentEl = document.getElementById('readerContent');
+        const titleEl = document.getElementById('readerTitle');
+        const plainText = contentEl.innerText || state.activeReaderArticle.snippet;
+        contentEl.innerHTML = '<p class="text-cyan-400 animate-pulse">🇮🇹 Traduzione integrale in italiano in corso...</p>';
+        const [trTitle, trBody] = await Promise.all([
+          translateToItalian(state.activeReaderArticle.originalTitle || state.activeReaderArticle.title),
+          translateToItalian(plainText.slice(0, 3500))
+        ]);
+        titleEl.textContent = trTitle;
+        contentEl.innerHTML = trBody.split('\n').map(p => `<p>${p}</p>`).join('');
+      });
     }
-  }
-};
+
+    function setupModal(triggerId, modalId, closeId) {
+      const modal = document.getElementById(modalId);
+      if (triggerId && document.getElementById(triggerId)) {
+        document.getElementById(triggerId).addEventListener('click', () => {
+          if (modalId === 'modalSettings') document.getElementById('inputApiKey').value = state.apiKey;
+          if (modalId === 'modalAddFeed') populateDestinationDropdown();
+          modal.classList.remove('hidden');
+        });
+      }
+      if (closeId && document.getElementById(closeId)) {
+        document.getElementById(closeId).addEventListener('click', () => modal.classList.add('hidden'));
+      }
+      modal.addEventListener('click', (e) => {
+        if (e.target === modal) modal.classList.add('hidden');
+      });
+    }
+
+    function addPresetCountry(name, flag, feedUrl, feedName) {
+      const id = name.toLowerCase().slice(0, 2);
+      if (!state.countries.find(c => c.id === id)) {
+        state.countries.push({
+          id,
+          name,
+          flag,
+          subcategories: ['Top Stories', 'Politica', 'Società & Cultura']
+        });
+      }
+      state.feeds.push({
+        id: 'preset_' + id + '_' + Date.now(),
+        name: feedName,
+        url: feedUrl,
+        categoryKey: `${id}:Top Stories`
+      });
+      saveState();
+      pushFeedsToCloud(state.feeds);
+      renderNavigation();
+      renderSourcesList();
+      document.getElementById('modalAddCountry').classList.add('hidden');
+      selectCategory(`${id}:Top Stories`);
+    }
+
+    function populateDestinationDropdown() {
+      const sel = document.getElementById('selectFeedDestination');
+      let opts = [];
+      state.countries.forEach(c => {
+        c.subcategories.forEach(sub => {
+          const selected = state.activeSelection === `${c.id}:${sub}` ? 'selected' : '';
+          opts.push(`<option value="${c.id}:${sub}" ${selected}>${c.flag} ${c.name} - ${sub}</option>`);
+        });
+      });
+      SCIENCE_CATEGORIES.forEach(s => {
+        const selected = state.activeSelection === s.id ? 'selected' : '';
+        opts.push(`<option value="${s.id}" ${selected}>🔬 ${s.name}</option>`);
+      });
+      sel.innerHTML = opts.join('');
+    }
+
+    function decodeAllOriginsContents(contents) {
+      if (!contents) return '';
+      if (contents.startsWith('data:') && contents.includes(';base64,')) {
+        try {
+          const base64 = contents.split(';base64,')[1];
+          const binary = atob(base64);
+          const bytes = new Uint8Array(binary.length);
+          for (let i = 0; i < binary.length; i++) {
+            bytes[i] = binary.charCodeAt(i);
+          }
+          return new TextDecoder('utf-8').decode(bytes);
+        } catch (e) {
+          return '';
+        }
+      }
+      return contents;
+    }
+
+    function tryAllOriginsJsonp(url) {
+      return new Promise((resolve) => {
+        const cbName = 'ao_' + Math.random().toString(36).substring(2, 9);
+        const script = document.createElement('script');
+        let done = false;
+
+        const timer = setTimeout(() => {
+          if (!done) { done = true; cleanup(); resolve(null); }
+        }, 4000);
+
+        function cleanup() {
+          clearTimeout(timer);
+          delete window[cbName];
+          if (script.parentNode) script.parentNode.removeChild(script);
+        }
+
+        window[cbName] = function(res) {
+          if (!done) {
+            done = true;
+            cleanup();
+            if (res && res.contents) {
+              resolve(decodeAllOriginsContents(res.contents));
+            } else {
+              resolve(null);
+            }
+          }
+        };
+
+        script.onerror = function() {
+          if (!done) { done = true; cleanup(); resolve(null); }
+        };
+
+        script.src = `https://api.allorigins.win/get?url=${encodeURIComponent(url)}&callback=${cbName}`;
+        document.head.appendChild(script);
+      });
+    }
+
+    function tryRss2JsonJsonp(url) {
+      return new Promise((resolve) => {
+        const cbName = 'r2j_' + Math.random().toString(36).substring(2, 9);
+        const script = document.createElement('script');
+        let done = false;
+
+        const timer = setTimeout(() => {
+          if (!done) { done = true; cleanup(); resolve(null); }
+        }, 3500);
+
+        function cleanup() {
+          clearTimeout(timer);
+          delete window[cbName];
+          if (script.parentNode) script.parentNode.removeChild(script);
+        }
+
+        window[cbName] = function(res) {
+          if (!done) {
+            done = true;
+            cleanup();
+            if (res && res.status === 'ok' && Array.isArray(res.items) && res.items.length > 0) {
+              resolve(res.items);
+            } else {
+              resolve(null);
+            }
+          }
+        };
+
+        script.onerror = function() {
+          if (!done) { done = true; cleanup(); resolve(null); }
+        };
+
+        script.src = `https://api.rss2json.com/v1/api.json?callback=${cbName}&rss_url=${encodeURIComponent(url)}`;
+        document.head.appendChild(script);
+      });
+    }
+
+    async function tryDirectProxyFetch(url) {
+      const endpoints = [
+        `${CLOUDFLARE_WORKER_PROXY}${encodeURIComponent(url)}`,
+        `https://corsproxy.io/?url=${encodeURIComponent(url)}`,
+        `https://api.allorigins.win/raw?url=${encodeURIComponent(url)}`,
+        `https://api.codetabs.com/v1/proxy?quest=${encodeURIComponent(url)}`
+      ];
+
+      for (const ep of endpoints) {
+        try {
+          const ctrl = new AbortController();
+          const t = setTimeout(() => ctrl.abort(), 4500);
+          const r = await fetch(ep, { signal: ctrl.signal });
+          clearTimeout(t);
+          if (r.ok) {
+            const text = await r.text();
+            if (text.includes('<rss') || text.includes('<feed') || text.includes('<channel')) {
+              return text;
+            }
+          }
+        } catch (e) {}
+      }
+      return null;
+    }
+
+    function parseXml(xmlStr, feed) {
+      if (!xmlStr) return [];
+      try {
+        const parser = new DOMParser();
+        const doc = parser.parseFromString(xmlStr, "text/xml");
+        const items = doc.querySelectorAll("item, entry");
+        const list = [];
+
+        items.forEach(node => {
+          const title = node.querySelector("title")?.textContent?.trim() || "Senza titolo";
+          let link = node.querySelector("link")?.textContent?.trim();
+          if (!link) link = node.querySelector("link")?.getAttribute("href") || "#";
+
+          const dateStr = node.querySelector("pubDate, published, updated, dc\\:date")?.textContent;
+          const pubDate = dateStr ? new Date(dateStr) : new Date();
+
+          let desc = node.querySelector("description, summary, content, content\\:encoded")?.textContent || "";
+          const tmp = document.createElement("div");
+          tmp.innerHTML = desc;
+          const cleanSnippet = tmp.textContent.replace(/\s+/g, ' ').trim().slice(0, 180) + '...';
+
+          const id = makeUniqueArticleId(link, title);
+
+          list.push({
+            id,
+            title,
+            originalTitle: title,
+            link,
+            pubDate: isNaN(pubDate.getTime()) ? new Date() : pubDate,
+            snippet: cleanSnippet || "Nessun estratto disponibile.",
+            originalSnippet: cleanSnippet || "Nessun estratto disponibile.",
+            fullContent: desc || cleanSnippet,
+            feedName: feed.name,
+            categoryKey: feed.categoryKey,
+            isTranslated: false,
+            summaryText: null
+          });
+        });
+
+        return list;
+      } catch (e) {
+        return [];
+      }
+    }
+
+    async function fetchFeedArticles(feed) {
+      const xmlDirect = await tryDirectProxyFetch(feed.url);
+      const parsedDirect = parseXml(xmlDirect, feed);
+      if (parsedDirect.length > 0) return parsedDirect;
+
+      const xml1 = await tryAllOriginsJsonp(feed.url);
+      const parsed1 = parseXml(xml1, feed);
+      if (parsed1.length > 0) return parsed1;
+
+      const r2jItems = await tryRss2JsonJsonp(feed.url);
+      if (r2jItems && r2jItems.length > 0) {
+        return r2jItems.map(item => {
+          const rawSnippet = (item.description || item.content || '').replace(/<[^>]*>?/gm, '').replace(/\s+/g, ' ').trim();
+          const cleanSnip = rawSnippet.slice(0, 180) + '...';
+          const cleanTitle = (item.title || 'Senza titolo').trim();
+          const id = makeUniqueArticleId(item.link, cleanTitle);
+          return {
+            id,
+            title: cleanTitle,
+            originalTitle: cleanTitle,
+            link: item.link || '#',
+            pubDate: item.pubDate ? new Date(item.pubDate) : new Date(),
+            snippet: cleanSnip,
+            originalSnippet: cleanSnip,
+            fullContent: item.content || item.description || rawSnippet,
+            feedName: feed.name,
+            categoryKey: feed.categoryKey,
+            isTranslated: false,
+            summaryText: null
+          };
+        });
+      }
+
+      return [];
+    }
+
+    async function loadActiveCategory(force = false) {
+      const activeKey = state.activeSelection;
+      const grid = document.getElementById('articlesGrid');
+      const empty = document.getElementById('emptyFeedState');
+
+      if (!force && state.articlesCache[activeKey] && state.articlesCache[activeKey].length > 0) {
+        state.articles = state.articlesCache[activeKey];
+        renderArticlesGrid();
+        autoTranslateVisibleArticles();
+        return;
+      }
+
+      let targets = [];
+      if (activeKey === 'Tutte') {
+        targets = state.feeds;
+      } else if (activeKey.endsWith(':Tutte')) {
+        const cId = activeKey.split(':')[0];
+        targets = state.feeds.filter(f => f.categoryKey.startsWith(cId + ':'));
+      } else {
+        targets = state.feeds.filter(f => f.categoryKey === activeKey);
+      }
+
+      if (targets.length === 0) {
+        state.articles = [];
+        renderArticlesGrid();
+        return;
+      }
+
+      empty.classList.add('hidden');
+      grid.innerHTML = '<div class="col-span-full py-16 text-center text-slate-400 flex flex-col items-center justify-center gap-3"><i data-lucide="loader-2" class="w-8 h-8 animate-spin text-cyan-400"></i><span class="text-sm font-semibold text-slate-200">Caricamento notizie in corso...</span><span class="text-xs text-slate-500">Connessione tramite Cloudflare Dedicated Proxy</span></div>';
+      lucide.createIcons();
+
+      state.articles = [];
+
+      const promises = targets.map(feed => {
+        return fetchFeedArticles(feed).then(items => {
+          if (items.length > 0) {
+            state.articles.push(...items);
+            state.articles.sort((a, b) => new Date(b.pubDate) - new Date(a.pubDate));
+            state.articlesCache[activeKey] = state.articles;
+            document.getElementById('badgeAllCount').textContent = state.articles.length;
+            renderArticlesGrid();
+            autoTranslateVisibleArticles();
+          }
+        });
+      });
+
+      await Promise.allSettled(promises);
+      renderArticlesGrid();
+      autoTranslateVisibleArticles();
+    }
+
+    function renderNavigation() {
+      const accordion = document.getElementById('countriesAccordion');
+      accordion.innerHTML = state.countries.map(c => {
+        const isExpanded = state.expandedCountry === c.id;
+        return `
+          <div class="rounded-xl overflow-hidden border border-slate-800/80 bg-slate-900/50">
+            <button onclick="toggleCountryAccordion('${c.id}')" class="w-full flex items-center justify-between px-3 py-2.5 text-xs font-bold text-slate-200 hover:bg-slate-850 transition-colors cursor-pointer">
+              <span class="flex items-center gap-2">
+                <span class="text-base">${c.flag}</span>
+                <span>${c.name}</span>
+              </span>
+              <i data-lucide="${isExpanded ? 'chevron-down' : 'chevron-right'}" class="w-3.5 h-3.5 text-slate-500"></i>
+            </button>
+            <div class="${isExpanded ? 'block' : 'hidden'} bg-slate-950/70 border-t border-slate-800/60 p-1 space-y-0.5">
+              <button onclick="selectCategory('${c.id}:Tutte')" class="w-full text-left px-2.5 py-1.5 rounded-lg text-[11px] font-medium transition-colors cursor-pointer ${state.activeSelection === c.id + ':Tutte' ? 'bg-indigo-600 text-white font-bold' : 'text-slate-400 hover:bg-slate-800 hover:text-slate-200'}">
+                • Tutte le Notizie ${c.name}
+              </button>
+              ${c.subcategories.map(sub => `
+                <button onclick="selectCategory('${c.id}:${sub}')" class="w-full text-left px-2.5 py-1.5 rounded-lg text-[11px] font-medium transition-colors cursor-pointer ${state.activeSelection === `${c.id}:${sub}` ? 'bg-indigo-600 text-white font-bold' : 'text-slate-400 hover:bg-slate-800 hover:text-slate-200'}">
+                  • ${sub}
+                </button>
+              `).join('')}
+            </div>
+          </div>
+        `;
+      }).join('');
+
+      const sciList = document.getElementById('scienceChannelsList');
+      sciList.innerHTML = SCIENCE_CATEGORIES.map(s => {
+        const isActive = state.activeSelection === s.id;
+        return `
+          <button onclick="selectCategory('${s.id}')" class="w-full flex items-center gap-2.5 px-3 py-2 rounded-xl text-xs font-medium transition-all cursor-pointer ${isActive ? 'bg-violet-600 text-white shadow-sm' : 'text-slate-300 hover:bg-slate-850 hover:text-white'}">
+            <i data-lucide="${s.icon}" class="w-3.5 h-3.5 text-violet-400"></i>
+            <span class="truncate">${s.name}</span>
+          </button>
+        `;
+      }).join('');
+
+      lucide.createIcons();
+    }
+
+    function toggleCountryAccordion(countryId) {
+      state.expandedCountry = state.expandedCountry === countryId ? null : countryId;
+      renderNavigation();
+    }
+
+    function selectCategory(selectionKey) {
+      state.activeSelection = selectionKey;
+      renderNavigation();
+      updateActiveCategoryHeader();
+      loadActiveCategory();
+
+      document.getElementById('sidebarDrawer').classList.add('-translate-x-full');
+      document.getElementById('drawerBackdrop').classList.add('hidden');
+    }
+
+    function updateActiveCategoryHeader() {
+      const titleEl = document.getElementById('activeCategoryTitle');
+      const subEl = document.getElementById('activeCategorySubtitle');
+      const badgeEl = document.getElementById('activeChannelBadge');
+      const iconEl = document.getElementById('activeIconContainer');
+
+      if (state.activeSelection === 'Tutte') {
+        iconEl.textContent = '🌐';
+        titleEl.textContent = 'Tutte le Notizie';
+        badgeEl.textContent = 'Flusso Globale';
+        subEl.textContent = 'Rassegna delle aperture mondiali';
+      } else if (state.activeSelection.includes(':')) {
+        const [cId, sub] = state.activeSelection.split(':');
+        const country = state.countries.find(c => c.id === cId);
+        iconEl.textContent = country ? country.flag : '📰';
+        titleEl.textContent = `${country ? country.name : ''} • ${sub}`;
+        badgeEl.textContent = country ? country.name : 'Nazione';
+        subEl.textContent = `Edizione nazionale e rassegna di ${sub}`;
+      } else {
+        const sci = SCIENCE_CATEGORIES.find(s => s.id === state.activeSelection);
+        if (state.activeSelection === 'sci_arte') iconEl.textContent = '🎨';
+        else if (state.activeSelection === 'sci_fisica') iconEl.textContent = '⚛️';
+        else if (state.activeSelection === 'sci_psico') iconEl.textContent = '🧠';
+        else if (state.activeSelection === 'sci_geopolitica') iconEl.textContent = '🌍';
+        else iconEl.textContent = '🔬';
+
+        titleEl.textContent = sci ? sci.name : 'Approfondimento';
+        badgeEl.textContent = 'Scienze & Ricerca';
+        subEl.textContent = 'Dossier, mostre, scoperte e patrimonio culturale';
+      }
+    }
+
+    function renderArticlesGrid() {
+      const grid = document.getElementById('articlesGrid');
+      const empty = document.getElementById('emptyFeedState');
+      const search = document.getElementById('inputSearch').value.toLowerCase();
+      const unreadOnly = document.getElementById('checkUnreadOnly').checked;
+
+      const filtered = state.articles.filter(art => {
+        const matchText = art.title.toLowerCase().includes(search) || art.snippet.toLowerCase().includes(search);
+        const matchUnread = unreadOnly ? !state.readArticles.has(art.id) : true;
+        return matchText && matchUnread;
+      });
+
+      document.getElementById('statFilteredCount').textContent = `${filtered.length} articoli`;
+
+      if (filtered.length === 0) {
+        grid.innerHTML = '';
+        empty.classList.remove('hidden');
+        return;
+      }
+
+      empty.classList.add('hidden');
+      grid.innerHTML = filtered.map(art => {
+        const isRead = state.readArticles.has(art.id);
+        const timeAgo = formatTimeAgo(art.pubDate);
+        const hasSummary = Boolean(art.summaryText);
+
+        return `
+          <article class="glass-card rounded-2xl p-4 sm:p-5 flex flex-col justify-between transition-all duration-200 hover:border-slate-700 ${isRead ? 'opacity-60 bg-slate-900/40' : 'hover:shadow-lg hover:shadow-indigo-950/20'}">
+            <div>
+              <div class="flex items-center justify-between text-[11px] mb-2.5">
+                <div class="flex items-center gap-2">
+                  <span class="px-2 py-0.5 rounded-md bg-indigo-500/10 text-cyan-300 font-bold border border-indigo-500/20">${art.feedName}</span>
+                  <span class="text-slate-500 font-mono">${timeAgo}</span>
+                </div>
+                <button onclick="toggleArticleRead('${art.id}')" class="touch-target p-1 text-slate-500 hover:text-cyan-400 cursor-pointer">
+                  <i data-lucide="${isRead ? 'check-circle-2' : 'circle'}" class="w-4 h-4 ${isRead ? 'text-emerald-400' : ''}"></i>
+                </button>
+              </div>
+
+              <h3 class="text-sm sm:text-base font-bold text-white leading-snug mb-2 hover:text-cyan-400 transition-colors">
+                <a id="card-title-${art.id}" href="javascript:void(0)" onclick="openReaderModal('${art.id}')">${art.title}</a>
+              </h3>
+
+              <p id="card-snippet-${art.id}" class="text-xs text-slate-400 line-clamp-2 sm:line-clamp-3 leading-relaxed mb-4">${art.snippet}</p>
+
+              <div id="inlineSummary-${art.id}" class="${hasSummary ? '' : 'hidden'} mb-3 p-3.5 rounded-xl bg-slate-900/95 border border-indigo-500/40 text-xs text-slate-200 leading-relaxed whitespace-pre-line shadow-inner">${art.summaryText || ''}</div>
+            </div>
+
+            <div class="pt-3 border-t border-slate-800/80 flex items-center justify-between gap-1.5 mt-auto">
+              <div class="flex items-center gap-1.5">
+                <button onclick="openReaderModal('${art.id}')" class="touch-target px-2.5 py-1.5 rounded-lg bg-slate-900 hover:bg-slate-800 text-slate-200 text-xs font-semibold flex items-center gap-1.5 border border-slate-800 active:scale-95 cursor-pointer">
+                  <i data-lucide="book-open" class="w-3.5 h-3.5 text-cyan-400"></i> Leggi
+                </button>
+                <button id="btn-sum-${art.id}" onclick="triggerCardSummary('${art.id}')" class="touch-target px-2.5 py-1.5 rounded-lg bg-indigo-600/20 hover:bg-indigo-600/35 text-indigo-300 text-xs font-semibold flex items-center gap-1.5 border border-indigo-500/30 active:scale-95 cursor-pointer transition-all">
+                  <i data-lucide="sparkles" class="w-3.5 h-3.5 text-amber-300"></i>
+                  <span>${hasSummary ? 'Rifai Sintesi' : 'Sintesi (1/3)'}</span>
+                </button>
+              </div>
+
+              <button onclick="openPerspectiveScannerById('${art.id}')" class="touch-target p-2 rounded-lg bg-slate-900 hover:bg-violet-950 text-slate-400 hover:text-violet-300 border border-slate-800 cursor-pointer" title="Confronta con altre testate">
+                <i data-lucide="scale" class="w-4 h-4 text-violet-400"></i>
+              </button>
+            </div>
+          </article>
+        `;
+      }).join('');
+
+      lucide.createIcons();
+    }
+
+    function toggleArticleRead(id) {
+      if (state.readArticles.has(id)) {
+        state.readArticles.delete(id);
+      } else {
+        state.readArticles.add(id);
+      }
+      localStorage.setItem('omni_read_articles', JSON.stringify([...state.readArticles]));
+      renderArticlesGrid();
+    }
+
+    async function openReaderModal(id) {
+      const art = state.articles.find(a => a.id === id);
+      if (!art) return;
+
+      state.activeReaderArticle = art;
+      state.readArticles.add(id);
+      localStorage.setItem('omni_read_articles', JSON.stringify([...state.readArticles]));
+      renderArticlesGrid();
+
+      document.getElementById('readerTitle').textContent = art.title;
+      document.getElementById('readerSourceBadge').textContent = art.feedName;
+      document.getElementById('readerDateBadge').textContent = new Intl.DateTimeFormat('it-IT', { dateStyle: 'medium', timeStyle: 'short' }).format(art.pubDate);
+      document.getElementById('readerExternalLink').href = art.link;
+
+      const parser = new DOMParser();
+      const doc = parser.parseFromString(art.fullContent, 'text/html');
+      doc.querySelectorAll('script, style, iframe, form, button').forEach(el => el.remove());
+      const contentEl = document.getElementById('readerContent');
+      contentEl.innerHTML = doc.body.innerHTML || art.snippet;
+
+      const summaryBox = document.getElementById('readerSummaryBox');
+      const summaryContent = document.getElementById('readerSummaryContent');
+      if (art.summaryText) {
+        summaryBox.classList.remove('hidden');
+        summaryContent.textContent = art.summaryText;
+      } else {
+        summaryBox.classList.add('hidden');
+        summaryContent.textContent = '';
+      }
+
+      document.getElementById('modalReader').classList.remove('hidden');
+      lucide.createIcons();
+
+      if (document.getElementById('checkAutoTranslate').checked && !art.categoryKey.startsWith('it:') && art.categoryKey !== 'sci_arte') {
+        const plain = contentEl.innerText || art.snippet;
+        const translatedBody = await translateToItalian(plain.slice(0, 3500));
+        contentEl.innerHTML = translatedBody.split('\n').map(p => `<p>${p}</p>`).join('');
+      }
+    }
+
+    // --- AUTO-DISCOVERY MODELLI GEMINI ---
+    let availableGoogleModels = [];
+
+    async function getAvailableGoogleModels(cleanKey) {
+      if (availableGoogleModels.length > 0) return availableGoogleModels;
+      try {
+        const listResp = await fetch(`https://generativelanguage.googleapis.com/v1beta/models?key=${cleanKey}`);
+        if (listResp.ok) {
+          const listData = await listResp.json();
+          if (listData.models && Array.isArray(listData.models)) {
+            const supported = listData.models
+              .filter(m => m.supportedGenerationMethods && m.supportedGenerationMethods.includes('generateContent'))
+              .map(m => m.name);
+
+            supported.sort((a, b) => {
+              const aFlash = a.includes('flash') ? 1 : 0;
+              const bFlash = b.includes('flash') ? 1 : 0;
+              return bFlash - aFlash;
+            });
+
+            if (supported.length > 0) {
+              availableGoogleModels = supported;
+              return availableGoogleModels;
+            }
+          }
+        }
+      } catch (e) {}
+      return ['models/gemini-2.0-flash', 'models/gemini-1.5-flash'];
+    }
+
+    async function queryGemini(prompt) {
+      const cleanKey = (state.apiKey || '').trim().replace(/^["']|["']$/g, '');
+
+      if (!cleanKey || cleanKey.length < 5) {
+        throw new Error("Chiave API mancante. Inserisci la tua chiave gratuita di Google AI Studio nelle impostazioni (⚙️).");
+      }
+
+      const modelsToTry = await getAvailableGoogleModels(cleanKey);
+      let lastError = "";
+
+      for (const fullModelPath of modelsToTry) {
+        try {
+          const endpoint = `https://generativelanguage.googleapis.com/v1beta/${fullModelPath}:generateContent?key=${cleanKey}`;
+          const resp = await fetch(endpoint, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              contents: [{ parts: [{ text: prompt }] }],
+              safetySettings: [
+                { category: "HARM_CATEGORY_HARASSMENT", threshold: "BLOCK_ONLY_HIGH" },
+                { category: "HARM_CATEGORY_HATE_SPEECH", threshold: "BLOCK_ONLY_HIGH" },
+                { category: "HARM_CATEGORY_SEXUALLY_EXPLICIT", threshold: "BLOCK_ONLY_HIGH" },
+                { category: "HARM_CATEGORY_DANGEROUS_CONTENT", threshold: "BLOCK_ONLY_HIGH" }
+              ],
+              generationConfig: { temperature: 0.2 }
+            })
+          });
+
+          const data = await resp.json().catch(() => ({}));
+
+          if (resp.ok) {
+            const candidate = data.candidates?.[0];
+            const txt = candidate?.content?.parts?.[0]?.text;
+            if (txt && txt.trim().length > 0) {
+              availableGoogleModels = [fullModelPath, ...modelsToTry.filter(m => m !== fullModelPath)];
+              return txt.trim();
+            }
+            if (candidate?.finishReason === 'SAFETY') {
+              return "Sintesi non disponibile per i filtri di sicurezza di Google.";
+            }
+          } else {
+            lastError = data.error?.message || `HTTP ${resp.status}`;
+            if (resp.status === 400 && lastError.toLowerCase().includes('key')) {
+              throw new Error("Chiave API Google non valida. Controlla la chiave nelle impostazioni (⚙️).");
+            }
+          }
+        } catch (e) {
+          if (e.message.includes('Chiave API Google non valida')) throw e;
+          lastError = e.message;
+        }
+      }
+
+      throw new Error(`Google AI: ${lastError || 'Nodi momentaneamente occupati. Riprova tra poco.'}`);
+    }
+
+    async function requestArticleSummary(art) {
+      const box = document.getElementById('readerSummaryBox');
+      const text = document.getElementById('readerSummaryContent');
+      box.classList.remove('hidden');
+      text.textContent = '✨ Generazione sintesi in corso...';
+      try {
+        const cleanBody = (art.fullContent || art.snippet || '').replace(/<[^>]*>?/gm, ' ').replace(/\s+/g, ' ').trim();
+        const prompt = `Riassumi questo articolo in ITALIANO a circa 1/3 della lunghezza, con 3 punti chiave essenziali:\n\nTITOLO: ${art.title}\nTESTO: ${cleanBody.slice(0, 2200)}`;
+        const res = await queryGemini(prompt);
+        art.summaryText = res;
+        text.textContent = res;
+      } catch (e) {
+        text.textContent = `Errore: ${e.message}`;
+      }
+    }
+
+    async function triggerCardSummary(id) {
+      const art = state.articles.find(a => a.id === id);
+      if (!art) return;
+
+      const box = document.getElementById(`inlineSummary-${id}`);
+      const btn = document.getElementById(`btn-sum-${id}`);
+
+      if (box) {
+        box.classList.remove('hidden');
+        box.textContent = '⏳ Elaborazione sintesi in corso...';
+      }
+      if (btn) {
+        btn.disabled = true;
+        btn.innerHTML = `<span class="animate-pulse">⏳ Sintesi...</span>`;
+      }
+
+      try {
+        const cleanBody = (art.fullContent || art.snippet || '').replace(/<[^>]*>?/gm, ' ').replace(/\s+/g, ' ').trim();
+        const prompt = `Riassumi questo articolo in ITALIANO a circa 1/3 della lunghezza con 3 punti chiave puntati:\n\nTITOLO: ${art.title}\nTESTO: ${cleanBody.slice(0, 2200)}`;
+        const res = await queryGemini(prompt);
+        art.summaryText = res;
+        if (box) box.textContent = res;
+      } catch (e) {
+        if (box) box.textContent = `⚠️ ${e.message}`;
+      } finally {
+        if (btn) {
+          btn.disabled = false;
+          btn.innerHTML = `<i data-lucide="sparkles" class="w-3.5 h-3.5 text-amber-300"></i><span>Rifai Sintesi</span>`;
+          lucide.createIcons();
+        }
+      }
+    }
+
+    function openPerspectiveScannerById(id) {
+      const art = state.articles.find(a => a.id === id);
+      openPerspectiveScanner(art ? art.title : '');
+    }
+
+    function openPerspectiveScanner(topic = '') {
+      const modal = document.getElementById('modalCompare');
+      const input = document.getElementById('inputCompareTopic');
+      document.getElementById('compareReport').classList.add('hidden');
+      document.getElementById('compareInitialState').classList.remove('hidden');
+      if (topic) {
+        input.value = topic;
+        executePerspectiveAnalysis(topic);
+      }
+      modal.classList.remove('hidden');
+      lucide.createIcons();
+    }
+
+    async function executePerspectiveAnalysis(query) {
+      const loading = document.getElementById('compareLoading');
+      const report = document.getElementById('compareReport');
+      const initialView = document.getElementById('compareInitialState');
+
+      initialView.classList.add('hidden');
+      report.classList.add('hidden');
+      loading.classList.remove('hidden');
+
+      const matches = state.articles.slice(0, 8);
+      const corpus = matches.map((m, i) => `[FONTE ${i+1}: ${m.feedName}]\nTITOLO: ${m.title}\nTESTO: ${m.snippet}`).join('\n\n');
+
+      const prompt = `Effettua un'analisi comparativa in ITALIANO sul tema: "${query}".
+Articoli recenti nel feed:
+${corpus}
+
+Struttura la risposta in 4 brevi sezioni:
+1. Nucleo Fattuale Condiviso
+2. Framing Editoriale a Confronto
+3. Divergenze e Omissioni
+4. Registro e Toni`;
+
+      try {
+        const analysis = await queryGemini(prompt);
+        loading.classList.add('hidden');
+        report.classList.remove('hidden');
+        report.innerHTML = `<div class="p-4 rounded-xl bg-slate-900 border border-violet-500/30 text-sm leading-relaxed whitespace-pre-line">${analysis}</div>`;
+      } catch (e) {
+        loading.classList.add('hidden');
+        report.classList.remove('hidden');
+        report.innerHTML = `<div class="p-4 rounded-xl bg-rose-950/50 text-rose-300 text-xs">Errore: ${e.message}</div>`;
+      }
+    }
+
+    async function triggerSuperBriefing() {
+      const modal = document.getElementById('modalBriefing');
+      const titleEl = document.getElementById('briefingModalTitle');
+      const loading = document.getElementById('briefingLoading');
+      const content = document.getElementById('briefingTextContent');
+
+      titleEl.textContent = `Super-Briefing: ${document.getElementById('activeCategoryTitle').textContent}`;
+      content.textContent = '';
+      loading.classList.remove('hidden');
+      modal.classList.remove('hidden');
+
+      const sample = state.articles.slice(0, 12);
+      const digest = sample.map((a, i) => `${i+1}. [${a.feedName}] ${a.title}: ${a.snippet}`).join('\n\n');
+
+      const prompt = `Scrivi un Super-Briefing esecutivo in ITALIANO delle seguenti notizie:\n\n${digest}\n\n1. Panoramica Generale\n2. I 5 Fatti Chiave\n3. Cosa Monitorare nelle prossime ore`;
+
+      try {
+        const result = await queryGemini(prompt);
+        loading.classList.add('hidden');
+        content.textContent = result;
+      } catch (e) {
+        loading.classList.add('hidden');
+        content.textContent = `Errore: ${e.message}`;
+      }
+    }
+
+    function renderSourcesList() {
+      const container = document.getElementById('sourcesContainer');
+      document.getElementById('countSources').textContent = state.feeds.length;
+      container.innerHTML = state.feeds.map(f => {
+        return `
+          <div class="flex items-center justify-between py-1 px-2 rounded-lg bg-slate-900/40 text-slate-400 text-[11px]">
+            <span class="truncate max-w-[140px] flex items-center gap-1.5">
+              <span class="w-1.5 h-1.5 rounded-full bg-cyan-400"></span>
+              ${f.name}
+            </span>
+            <button onclick="removeFeed('${f.id}')" class="text-slate-600 hover:text-rose-400 p-0.5 cursor-pointer"><i data-lucide="trash" class="w-3 h-3"></i></button>
+          </div>
+        `;
+      }).join('');
+      lucide.createIcons();
+    }
+
+    function removeFeed(id) {
+      state.feeds = state.feeds.filter(f => f.id !== id);
+      saveState();
+      pushFeedsToCloud(state.feeds);
+      renderSourcesList();
+      loadActiveCategory(true);
+    }
+
+    function formatTimeAgo(date) {
+      const sec = Math.floor((new Date() - date) / 1000);
+      if (sec < 3600) return `${Math.max(1, Math.floor(sec / 60))}m fa`;
+      if (sec < 86400) return `${Math.floor(sec / 3600)}h fa`;
+      return `${Math.floor(sec / 86400)}g fa`;
+    }
+
+    function saveState() {
+      localStorage.setItem('omni_countries', JSON.stringify(state.countries));
+      localStorage.setItem('omni_feeds', JSON.stringify(state.feeds));
+    }
+  </script>
+</body>
+</html>
