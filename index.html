@@ -566,28 +566,55 @@
     });
 
     // --- LOGICA SINCRONIZZAZIONE CLOUD KV ---
-    async function syncFeedsFromCloud() {
-      const indicator = document.getElementById('cloudSyncIndicator');
-      try {
-        const resp = await fetch(CLOUDFLARE_SYNC_ENDPOINT);
-        if (resp.ok) {
-          const cloudFeeds = await resp.json();
-          if (Array.isArray(cloudFeeds) && cloudFeeds.length > 0) {
-            state.feeds = cloudFeeds;
-            localStorage.setItem('omni_feeds', JSON.stringify(cloudFeeds));
-            renderSourcesList();
-            if (indicator) indicator.innerHTML = `<span class="w-1.5 h-1.5 rounded-full bg-emerald-400"></span> Connesso`;
-            return;
-          } else {
-            // Se il database su Cloudflare è vuoto, invia le fonti predefinite
-            await pushFeedsToCloud(state.feeds);
-          }
+async function syncFeedsFromCloud() {
+  const indicator = document.getElementById('cloudSyncIndicator');
+  try {
+    const resp = await fetch(CLOUDFLARE_SYNC_ENDPOINT);
+    if (resp.ok) {
+      const cloudData = await resp.json();
+      if (Array.isArray(cloudData) && cloudData.length > 0) {
+        state.feeds = cloudData;
+        localStorage.setItem('omni_feeds', JSON.stringify(cloudData));
+        renderSourcesList();
+      } else if (cloudData && typeof cloudData === 'object') {
+        if (Array.isArray(cloudData.feeds) && cloudData.feeds.length > 0) {
+          state.feeds = cloudData.feeds;
+          localStorage.setItem('omni_feeds', JSON.stringify(cloudData.feeds));
         }
-      } catch (e) {
-        console.warn("Sincronizzazione cloud non disponibile, uso fonti locali:", e);
-        if (indicator) indicator.innerHTML = `<span class="w-1.5 h-1.5 rounded-full bg-amber-400"></span> Locale`;
+        if (Array.isArray(cloudData.countries) && cloudData.countries.length > 0) {
+          state.countries = cloudData.countries;
+          localStorage.setItem('omni_countries', JSON.stringify(cloudData.countries));
+          renderNavigation();
+        }
+        renderSourcesList();
       }
+      if (indicator) indicator.innerHTML = `<span class="w-1.5 h-1.5 rounded-full bg-emerald-400"></span> Connesso`;
     }
+  } catch (e) {
+    console.warn("Sincronizzazione cloud non disponibile, uso locale:", e);
+    if (indicator) indicator.innerHTML = `<span class="w-1.5 h-1.5 rounded-full bg-amber-400"></span> Locale`;
+  }
+}
+
+async function pushFeedsToCloud() {
+  const indicator = document.getElementById('cloudSyncIndicator');
+  if (indicator) indicator.innerHTML = `<span class="w-1.5 h-1.5 rounded-full bg-cyan-400 animate-spin"></span> Sync...`;
+  try {
+    const payload = {
+      feeds: state.feeds,
+      countries: state.countries
+    };
+    await fetch(CLOUDFLARE_SYNC_ENDPOINT, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload)
+    });
+    if (indicator) indicator.innerHTML = `<span class="w-1.5 h-1.5 rounded-full bg-emerald-400"></span> Connesso`;
+  } catch (e) {
+    console.error("Errore salvataggio su Cloudflare KV:", e);
+    if (indicator) indicator.innerHTML = `<span class="w-1.5 h-1.5 rounded-full bg-rose-400"></span> Errore Sync`;
+  }
+}
 
     async function pushFeedsToCloud(feedsList) {
       const indicator = document.getElementById('cloudSyncIndicator');
